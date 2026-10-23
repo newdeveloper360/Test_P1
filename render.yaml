@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: ip-tracker-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: CACHE_STORE
+        value: array
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false
+      - key: APP_KEY
+        sync: false
+      - key: IP_TRACKER_ADMIN_PASSWORD
+        sync: false

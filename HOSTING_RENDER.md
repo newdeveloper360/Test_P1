@@ -1,0 +1,16 @@
+# Free hosting for the Location Tracker Laravel API
+
+The phone error in the screenshot came from `http://10.0.2.2:8000`, an address reserved for the Android emulator. The updated APK replaces that saved address with the current computer Wi-Fi address. Hosting is optional for testing on the same Wi-Fi; use hosting when the phone must connect from anywhere.
+
+This project is prepared for a free [Render web service](https://render.com/docs/deploy-php-laravel-docker) and a free [Neon PostgreSQL database](https://neon.com/blog/neon-free-plan-1-gb-per-project). Render's free web service supports Docker and HTTPS. Neon provides a persistent database; a database stored on Render's free web-service filesystem would disappear when the service restarts. Render's own free PostgreSQL database expires after 30 days, so use Neon for this setup. See [Render's free-plan limits](https://render.com/docs/free).
+
+## Upload the Laravel project
+
+1. Create a free Neon account and a PostgreSQL project. Copy its **direct connection string** with `sslmode=require`. Keep it private.
+2. Create a **private** GitHub repository containing the Laravel backend folder `D:\1 Akash Kumar\2_Laravel_11\htdocs\development\50_practise_and_backup\1_practise\4_Ip_Tracker_Backend`. The backend now contains `Dockerfile`, `.dockerignore`, `render-start.sh`, and `render.yaml`. Commit the source and `composer.lock`. Do not upload `.env`, `vendor`, or local databases; the supplied ignore files exclude them.
+3. Generate an app key locally from the Laravel backend folder: `php artisan key:generate --show`. Keep it private.
+4. Sign up for Render, choose **New > Blueprint**, connect that GitHub repository, and select the Free plan. The `render.yaml` file configures Docker, `/up` health checks, and non-secret settings. Enter the generated `APP_KEY`, Neon's connection string as `DB_URL`, and a strong new `IP_TRACKER_ADMIN_PASSWORD` when Render asks for secret values. `DB_CONNECTION=pgsql` is already configured. The local admin account uses phone `1234567890` and password `112233`; production requires a different password.
+5. Wait for the first deploy. The container installs Composer dependencies, runs `php artisan migrate --force`, and creates the admin account against Neon when it starts. Open `https://YOUR-SERVICE.onrender.com/up`; it should return HTTP 200.
+6. On the APK login page, replace the server address with `https://YOUR-SERVICE.onrender.com` and register an account. The app adds `/api` itself. The first request can take about a minute after Render's free service sleeps; the APK allows 90 seconds for an `onrender.com` server.
+
+The local MySQL database is separate from Neon. Deploying the code does not copy any existing users or locations; those need a separate data migration if you want them online. Keep `APP_DEBUG=false` and never commit database passwords or `APP_KEY`. Render's free web service sleeps after 15 minutes without traffic and has usage limits, so test the service before depending on it for continuous location tracking. [Render deployment guide](https://render.com/docs/deploy-php-laravel-docker), [Laravel deployment requirements](https://laravel.com/framework/docs/11.x/deployment).

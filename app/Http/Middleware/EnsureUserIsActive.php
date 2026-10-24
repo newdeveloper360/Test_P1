@@ -18,6 +18,10 @@ class EnsureUserIsActive
             return ApiResponse::failed('This account is blocked.', null, 403);
         }
 
+        if (!$request->user()?->is_active) {
+            $request->user()?->tokens()->delete();
+            return ApiResponse::failed('This account is inactive. Contact support.', null, 403);
+        }
         return $next($request);
     }
 }

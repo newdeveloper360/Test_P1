@@ -20,6 +20,8 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $attributes = ['is_active' => true];
+
     protected $fillable = [
         'name',
         'email',
@@ -27,6 +29,7 @@ class User extends Authenticatable
         'password',
         'role',
         'is_blocked',
+        'is_active',
         'invite_code',
         'invited_by_user_id',
     ];
@@ -38,6 +41,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'show_password',
         'remember_token',
     ];
 
@@ -51,9 +55,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'show_password' => 'encrypted',
             'is_blocked' => 'boolean',
+            'is_active' => 'boolean',
             'locations_cleared_at' => 'datetime',
         ];
+    }
+
+    private ?string $pendingReadablePassword = null;
+
+    public function setPasswordAttribute(#[\SensitiveParameter] string $value): void
+    {
+        $hashed = \Illuminate\Support\Facades\Hash::isHashed($value);
+        $this->attributes['password'] = $hashed ? $value : \Illuminate\Support\Facades\Hash::make($value);
+        $this->pendingReadablePassword = $hashed ? null : $value;
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->isDirty('password')) {
+                // Existing hashes cannot be reversed; capture only explicitly set passwords.
+                $user->show_password = in_array($user->role, ['user', 'member'], true)
+                    ? $user->pendingReadablePassword : null;
+            }
+        });
+        static::saved(function (User $user) { $user->pendingReadablePassword = null; });
     }
 
     public function locations(): HasMany
@@ -76,4 +103,5 @@ class User extends Authenticatable
         return $this->hasMany(LoginEvent::class);
     }
 }
+
 

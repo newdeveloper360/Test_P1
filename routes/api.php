@@ -15,6 +15,7 @@ Route::post('/user/create', [AuthController::class, 'register'])->middleware('th
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::middleware(['auth:sanctum', 'active.user', 'app.maintenance'])->group(function () {
+    Route::post('/advice', [\App\Http\Controllers\Api\AdviceController::class, 'store'])->middleware('throttle:advice');
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::patch('/profile', [AuthController::class, 'updateProfile']);

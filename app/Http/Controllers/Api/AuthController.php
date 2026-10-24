@@ -31,7 +31,7 @@ class AuthController extends Controller
         if ($role === 'member') {
             $inviter = User::query()->where('role', 'user')
                 ->where('invite_code', $data['invite_code'])
-                ->where('is_blocked', false)->first();
+                ->where('is_blocked', false)->where('is_active', true)->first();
             if (!$inviter) return Response::failed('Invalid invite code.', null, 422);
             $data['invited_by_user_id'] = $inviter->id;
             unset($data['invite_code']);
@@ -63,6 +63,7 @@ class AuthController extends Controller
             return Response::failed('Admin accounts sign in on the Laravel website.', null, 403);
         }
         if ($user->is_blocked) return Response::failed('This account is blocked.', null, 403);
+        if (!$user->is_active) return Response::failed('This account is inactive. Contact support.', null, 403);
         if (Setting::current()->maintenance_mode)
             return Response::failed(Setting::current()->maintenance_message
                 ?: 'The app is under maintenance. Please try again later.', null, 503);

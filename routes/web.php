@@ -26,6 +26,9 @@ Route::post('/admin/login', [AdminController::class, 'login'])
     ->middleware('throttle:5,1')->name('admin.login.submit');
 
 Route::prefix('admin')->name('admin.')->middleware(['admin.web', 'throttle:admin-panel'])->group(function () {
+    Route::get('/advice', [\App\Http\Controllers\Web\AdviceController::class, 'index'])->name('advice.index');
+    Route::patch('/advice/{advice}', [\App\Http\Controllers\Web\AdviceController::class, 'update'])->name('advice.update');
+    Route::patch('/accounts/{user}/active', [AdminController::class, 'toggleActive'])->name('accounts.active');
     Route::resource('blogs', BlogController::class)->except('show');
     Route::resource('pages', PageController::class)->except('show');
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');

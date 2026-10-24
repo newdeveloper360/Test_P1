@@ -35,7 +35,7 @@ class AdminController extends Controller
         ]);
         if (!Auth::guard('web')->attempt([
             'phone' => $data['phone'], 'password' => $data['password'],
-            'role' => 'admin', 'is_blocked' => false,
+            'role' => 'admin', 'is_blocked' => false, 'is_active' => true,
         ])) {
             return back()->withErrors(['phone' => 'Invalid admin phone or password.'])
                 ->onlyInput('phone');
@@ -64,6 +64,8 @@ class AdminController extends Controller
     public function dashboard(): View
     {
         return view('admin.dashboard', [
+            'inactive' => User::whereIn('role', ['user', 'member'])->where('is_active', false)->count(),
+            'newAdvice' => \App\Models\Advice::where('status', 'new')->count(),
             'totalUsers' => User::where('role', 'user')->count(),
             'totalMembers' => User::where('role', 'member')->count(),
             'blocked' => User::whereIn('role', ['user', 'member'])->where('is_blocked', true)->count(),
@@ -82,7 +84,7 @@ class AdminController extends Controller
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'role' => ['nullable', Rule::in(['user', 'member'])],
-            'status' => ['nullable', Rule::in(['active', 'blocked'])],
+            'status' => ['nullable', Rule::in(['active', 'inactive', 'blocked'])],
         ]);
         $query = User::whereIn('role', ['user', 'member']);
         if (!empty($filters['q'])) {
@@ -91,7 +93,9 @@ class AdminController extends Controller
                 ->orWhere('phone', 'like', "%{$term}%"));
         }
         if (!empty($filters['role'])) $query->where('role', $filters['role']);
-        if (!empty($filters['status'])) $query->where('is_blocked', $filters['status'] === 'blocked');
+        if (($filters['status'] ?? '') === 'blocked') $query->where('is_blocked', true);
+        if (($filters['status'] ?? '') === 'inactive') $query->where('is_active', false);
+        if (($filters['status'] ?? '') === 'active') $query->where('is_active', true)->where('is_blocked', false)->where('is_active', true);
         return view('admin.accounts', [
             'accounts' => $query->with('invitedBy:id,name')
                 ->withCount(['members', 'locations'])->withMax('locations', 'captured_at')
@@ -104,7 +108,7 @@ class AdminController extends Controller
     {
         return view('admin.account-form', [
             'account' => null,
-            'owners' => User::where('role', 'user')->where('is_blocked', false)
+            'owners' => User::where('role', 'user')->where('is_blocked', false)->where('is_active', true)
                 ->orderBy('name')->get(['id', 'name', 'phone']),
         ]);
     }
@@ -122,7 +126,7 @@ class AdminController extends Controller
             unset($data['invited_by_user_id']);
             $data['invite_code'] = $this->newInviteCode();
         } elseif (!User::whereKey($data['invited_by_user_id'])
-            ->where('role', 'user')->where('is_blocked', false)->exists()) {
+            ->where('role', 'user')->where('is_blocked', false)->where('is_active', true)->exists()) {
             throw ValidationException::withMessages([
                 'invited_by_user_id' => 'Select an active user for this member.',
             ]);
@@ -161,6 +165,15 @@ class AdminController extends Controller
         return redirect()->route('admin.accounts.show', $user)->with('success', 'Account updated.');
     }
 
+    public function toggleActive(Request $request, User $user): RedirectResponse
+    {
+        $this->assertAccount($user);
+        $data = $request->validate(['is_active' => ['required', 'boolean']]);
+        $user->update(['is_active' => $data['is_active']]);
+        if (!$user->is_active) $user->tokens()->delete();
+        return back()->with('success', $user->is_active ? 'Account activated.' : 'Account deactivated. All app sessions signed out.');
+    }
+
     public function toggleBlock(User $user): RedirectResponse
     {
         $this->assertAccount($user);
@@ -177,14 +190,15 @@ class AdminController extends Controller
         return redirect()->route('admin.accounts.index')->with('success', 'Account deleted.');
     }
 
-    public function locations(User $user): View
+    public function locations(Request $request, User $user): View
     {
         $this->assertAccount($user);
-        return view('admin.locations', [
-            'account' => $user,
-            'locations' => $user->locations()->orderByDesc('captured_at')
-                ->orderByDesc('id')->paginate(30),
-        ]);
+        $data = $request->validate(['q'=>['nullable','string','max:100'], 'from'=>['nullable','date_format:Y-m-d'], 'to'=>['nullable','date_format:Y-m-d',Rule::when($request->filled('from'),'after_or_equal:from')]]);
+        $query = $user->locations();
+        if (!empty($data['q'])) $query->where(fn($q)=>$q->where('full_address','like','%'.$data['q'].'%')->orWhere('city','like','%'.$data['q'].'%'));
+        if (!empty($data['from'])) $query->whereDate('captured_at','>=',$data['from']);
+        if (!empty($data['to'])) $query->whereDate('captured_at','<=',$data['to']);
+        return view('admin.locations', ['account'=>$user,'locations'=>$query->orderByDesc('captured_at')->orderByDesc('id')->paginate(30)->withQueryString()]);
     }
 
     public function settings(): View

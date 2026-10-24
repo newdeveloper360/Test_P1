@@ -13,7 +13,7 @@ class EnsureAdminWeb
     {
         $user = Auth::guard('web')->user();
         if (!$user) return redirect()->route('admin.login');
-        if ($user->role !== 'admin' || $user->is_blocked) {
+        if ($user->role !== 'admin' || $user->is_blocked || !$user->is_active) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

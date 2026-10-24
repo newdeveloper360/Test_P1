@@ -1,1 +1,2 @@
-<section class="wrap cta"><div><span class="eyebrow">TAKE YOUR PLACES WITH YOU</span><h2>Your next stop starts here.</h2><p>Get {{ $siteName }} for Android and bring your day into view.</p></div><a class="button light" href="{{ route('site.download') }}">@include('site.icon',['name'=>'download']) Download app</a></section>
+<section class="wrap cta"><div><span class="eyebrow">TAKE YOUR PLACES WITH YOU</span><h2>Your next stop starts here.</h2><p>Get {{ $siteName }} for Android and bring your day into view.</p></div><a class="button light btn btn-primary" href="{{ route('site.download') }}">@include('site.icon',['name'=>'download']) Download app</a></section>
+

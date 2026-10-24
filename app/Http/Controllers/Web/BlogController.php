@@ -11,7 +11,13 @@ use Illuminate\Validation\Rule;
 
 class BlogController extends Controller
 {
-    public function index() { return view('admin.blogs.index', ['blogs' => Blog::select(['id', 'title', 'slug', 'is_published', 'created_at'])->latest()->paginate(20)]); }
+    public function index(Request $request) {
+        $data = $request->validate(['q'=>['nullable','string','max:100'], 'status'=>['nullable',Rule::in(['published','draft'])]]);
+        $query = Blog::select(['id','title','slug','is_published','created_at']);
+        if (!empty($data['q'])) $query->where('title','like','%'.$data['q'].'%');
+        if (!empty($data['status'])) $query->where('is_published',$data['status']==='published');
+        return view('admin.blogs.index', ['blogs'=>$query->latest()->paginate(20)->withQueryString()]);
+    }
     public function create() { return view('admin.blogs.form', ['blog' => new Blog]); }
     public function edit(Blog $blog) { return view('admin.blogs.form', compact('blog')); }
 

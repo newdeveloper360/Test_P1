@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#1e35bc">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', 'Admin') · IP Tracker</title>
+    <link rel="stylesheet" href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}">
     <style>
         :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#172344;background:#f4f7ff}
         *{box-sizing:border-box}body{margin:0}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -20,11 +21,23 @@
         @media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{padding:14px 18px;gap:14px}.brand{font-size:17px}.nav{display:flex;overflow-x:auto}.nav a{white-space:nowrap;padding:9px 12px}.sidebar-bottom{display:none}.mobile-logout{display:block}.mobile-logout button{white-space:nowrap;color:#fff;background:#ffffff25;border:0;border-radius:12px;padding:9px 12px;font-weight:650}.main{padding-top:22px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
         @media(max-width:600px){.stats,.two,.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.topbar{align-items:start;flex-direction:column}.card{padding:17px}.section-heading{align-items:start;flex-direction:column}}
     </style>
-</head>
+<style>
+body{color:#172344;background:#f5f7fc}.shell{grid-template-columns:264px minmax(0,1fr)}
+.sidebar{height:100vh;position:sticky;top:0;background:#142369;padding:28px 18px;overflow-y:auto}
+.sidebar .nav{display:grid;flex-wrap:nowrap}.sidebar .nav a{font-size:14px;padding:12px 16px;border-radius:10px}.sidebar .nav a.active{background:#fff;color:#213bb8;box-shadow:0 4px 14px #0001}
+.main{display:flex;flex-direction:column;min-height:100vh;padding:28px 32px 0}.main-content{flex:1}.card{border:1px solid #e4e9f3;border-radius:16px;box-shadow:0 3px 18px #14236905}.card.filters{flex-direction:row}
+.topbar{padding-bottom:22px;border-bottom:1px solid #e4e9f3}.admin-footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:24px 0;margin-top:32px;border-top:1px solid #e4e9f3;font-size:12px;color:#77839b}
+.btn.primary,.btn-primary{--bs-btn-bg:#243bc5;--bs-btn-border-color:#243bc5}.btn:focus-visible{box-shadow:0 0 0 3px #9aacf7}.table{--bs-table-bg:transparent}.table thead{background:#f6f8fc}.table-wrap{padding:8px}.table td{padding:17px 14px}.advice-message{white-space:pre-wrap;overflow-wrap:anywhere}.modal-content{border:0;border-radius:18px}.pagination{margin-top:24px}.page-link{color:#243bc5}.active>.page-link{background:#243bc5;border-color:#243bc5}
+.sidebar .offcanvas-body{display:flex;flex-direction:column;gap:24px;padding:0;overflow:visible}.sidebar .offcanvas-header{padding:0 0 20px}.sidebar .btn-close{filter:invert(1)}
+@media(min-width:992px){.sidebar.offcanvas-lg{visibility:visible!important;transform:none!important;background:#142369!important;color:#fff}.sidebar .offcanvas-body{display:flex!important}}
+@media(max-width:991.98px){.shell{display:block}.sidebar.offcanvas-lg{height:100dvh;position:fixed;width:280px;background:#142369;color:#fff;gap:0}.sidebar .nav{display:grid;overflow:visible}.sidebar-bottom{display:block}.main{padding:20px 16px 0}.topbar{align-items:stretch;flex-direction:column}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.mobile-logout{display:none}}
+@media(max-width:600px){.stats,.two,.form-grid{grid-template-columns:1fr}.card.filters{flex-direction:column;align-items:stretch}.filters .field{min-width:0;width:100%}.page-title{font-size:26px}}
+@media(min-width:350px) and (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats .card{padding:16px}.stats .stat .label{font-size:12px}.stats .stat .hint{font-size:11px}.stats .stat .number{font-size:28px}}
+</style></head>
 <body>
 @if (Auth::guard('web')->user()?->role === 'admin')
 <div class="shell">
-    <aside class="sidebar">
+    <aside class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="adminSidebar" aria-labelledby="sidebarTitle"><div class="offcanvas-header d-lg-none"><span id="sidebarTitle" class="fw-bold">Navigation</span><button class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#adminSidebar" aria-label="Close navigation"></button></div><div class="offcanvas-body">
         <a class="brand" href="{{ route('admin.dashboard') }}"><span class="brand-mark">⌖</span><span>IP Tracker<br><small style="font-size:11px;font-weight:600;opacity:.7">ADMIN PANEL</small></span></a>
         <nav class="nav" aria-label="Admin navigation">
             <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">◫ &nbsp; Overview</a>
@@ -34,17 +47,20 @@
             <a class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}" href="{{ route('admin.pages.index') }}">Website pages</a>
             <a class="{{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}" href="{{ route('admin.contacts.index') }}">Contact requests</a>
             <a class="{{ request()->routeIs('admin.settings*') ? 'active' : '' }}" href="{{ route('admin.settings') }}">⚙ &nbsp; Website & app settings</a>
+            <a class="{{ request()->routeIs('admin.advice.*') ? 'active' : '' }}" href="{{ route('admin.advice.index') }}">App advice</a>
             <a href="{{ route('site.home') }}" target="_blank" rel="noopener">View website ↗</a>
             <a class="{{ request()->routeIs('admin.profile*') ? 'active' : '' }}" href="{{ route('admin.profile') }}">● &nbsp; My profile</a>
             <form class="mobile-logout" action="{{ route('admin.logout') }}" method="post">@csrf<button type="submit">Sign out</button></form>
         </nav>
         <div class="sidebar-bottom"><strong>{{ Auth::guard('web')->user()->name }}</strong><small>Administrator</small><form action="{{ route('admin.logout') }}" method="post">@csrf<button class="logout" type="submit">Sign out →</button></form></div>
-    </aside>
+    </div></aside>
     <main class="main">
-        <div class="topbar"><div><div class="eyebrow">Location management</div><h1 class="page-title">@yield('title', 'Overview')</h1></div><div class="top-action">@yield('actions')</div></div>
+<div class="d-lg-none mb-3"><button class="btn" data-bs-toggle="offcanvas" data-bs-target="#adminSidebar" aria-controls="adminSidebar">☰ Menu</button></div>
+        <header class="topbar"><div><div class="eyebrow">Location management</div><h1 class="page-title">@yield('title', 'Overview')</h1></div><div class="top-action">@yield('actions')<a class="btn subtle" href="{{ route('admin.profile') }}">{{ Auth::guard('web')->user()->name }}</a></div></header><div class="main-content">
         @if(session('success'))<div class="flash success" role="status">{{ session('success') }}</div>@endif
         @if($errors->any())<div class="flash error" role="alert">{{ $errors->first() }}</div>@endif
         @yield('content')
+        </div><footer class="admin-footer"><span>© {{ date('Y') }} IP Tracker · Administration</span><div class="d-flex gap-3"><a href="{{ route('site.sitemap') }}" target="_blank" rel="noopener">Sitemap XML ↗</a><a href="{{ route('site.robots') }}" target="_blank" rel="noopener">robots.txt ↗</a><a href="{{ route('site.home') }}" target="_blank" rel="noopener">Website ↗</a></div></footer>
     </main>
 </div>
 @else
@@ -53,6 +69,8 @@
 @if($errors->any())
 <script>document.addEventListener('DOMContentLoaded',function(){const errors=@json($errors->messages());Object.entries(errors).forEach(function([key,messages]){const name=key.replace(/\.(\d+)/g,'[$1]');const controls=Array.from(document.querySelectorAll('input,textarea,select'));const control=controls.find(function(input){return input.name===name||input.name===name+'[]'||input.name===key.split('.')[0]+'[]';});if(!control)return;control.setAttribute('aria-invalid','true');const field=control.closest('.field');if(field&&!field.querySelector('.error')){const small=document.createElement('small');small.className='error';small.setAttribute('role','alert');small.textContent=messages[0];field.appendChild(small);}});});</script>
 @endif
+<script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}" defer></script>
 @stack('scripts')
 </body>
 </html>
+

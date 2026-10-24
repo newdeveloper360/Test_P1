@@ -11,7 +11,10 @@ use Illuminate\Validation\Rule;
 
 class PageController extends Controller
 {
-    public function index() { return view('admin.pages.index', ['pages' => Page::latest()->paginate(20)]); }
+    public function index(Request $request) {
+        $data=$request->validate(['q'=>['nullable','string','max:100']]);
+        return view('admin.pages.index',['pages'=>Page::when($data['q'] ?? null,fn($q,$term)=>$q->where('title','like','%'.$term.'%'))->latest()->paginate(20)->withQueryString()]);
+    }
     public function create() { return view('admin.pages.form', ['page' => new Page]); }
     public function edit(Page $page) { return view('admin.pages.form', compact('page')); }
 

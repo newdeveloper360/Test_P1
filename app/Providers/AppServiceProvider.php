@@ -27,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+        \Illuminate\Pagination\Paginator::useBootstrapFive();
+        RateLimiter::for('advice', fn (Request $request) => Limit::perHour(5)->by('advice|'.$request->user()->id));
         RateLimiter::for('contact-form', fn (Request $request) => [
             Limit::perMinute(2)->by('contact-minute|'.$request->ip()),
             Limit::perHour(5)->by('contact-hour|'.$request->ip()),

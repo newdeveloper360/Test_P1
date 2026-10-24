@@ -40,7 +40,10 @@ class WebsiteTest extends TestCase
             'youtube_url' => 'https://www.youtube.com/@example', 'support_email' => 'support@example.com']);
         $this->get('/')->assertSee('wa.me/919876543210', false)->assertSee('tel:+919876543210', false)
             ->assertSee('youtube.com/@example', false)->assertSee('support@example.com');
-        $this->get('/sitemap.xml')->assertOk()->assertSee('/pages/privacy-policy', false);
+        $sitemap = $this->get('/sitemap.xml')->assertOk()->assertSee('/pages/privacy-policy', false);
+        $xml = new \DOMDocument();
+        $this->assertTrue($xml->loadXML($sitemap->getContent()));
+        $this->assertGreaterThanOrEqual(8, $xml->getElementsByTagName('url')->length);
         $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /admin', false);
         $this->get('/not-a-page')->assertNotFound();
     }

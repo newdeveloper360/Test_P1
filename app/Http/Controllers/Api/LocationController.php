@@ -48,15 +48,17 @@ class LocationController extends Controller
             $before = $request->user()->locations()
                 ->where('captured_at', '<=', $data['captured_at'])
                 ->orderByDesc('captured_at')->orderByDesc('id')->first();
-            if ($before && $this->distanceMeters(
-                (float) $before->latitude, (float) $before->longitude,
-                (float) $data['latitude'], (float) $data['longitude']) < 25) {
+            if ($before && $this->sameLocation($before, $data)) {
                 return Response::success('Location unchanged.',
                     ['location' => $before, 'unchanged' => true]);
             }
             $after = $request->user()->locations()
                 ->where('captured_at', '>', $data['captured_at'])
                 ->orderBy('captured_at')->orderBy('id')->first();
+            if ($after && $this->sameLocation($after, $data)) {
+                return Response::success('Location unchanged.',
+                    ['location' => $after, 'unchanged' => true]);
+            }
             $location = isset($data['client_fix_id'])
                 ? $request->user()->locations()->firstOrCreate(
                     ['client_fix_id' => $data['client_fix_id']], $data)
@@ -71,6 +73,32 @@ class LocationController extends Controller
 
             return Response::success('Location saved.', ['location' => $location], 201);
         });
+    }
+
+    private function sameLocation($saved, array $incoming): bool
+    {
+        $compared = false;
+        foreach (['place', 'street', 'city', 'district', 'state', 'postal_code', 'country'] as $field) {
+            $old = $this->normalizedAddress($saved->{$field});
+            $new = $this->normalizedAddress($incoming[$field] ?? null);
+            if ($old === '' || $new === '') continue;
+            $compared = true;
+            if ($old !== $new) return false;
+        }
+        if ($compared) return true;
+
+        $old = $this->normalizedAddress($saved->full_address);
+        $new = $this->normalizedAddress($incoming['full_address'] ?? null);
+        if ($old !== '' && $new !== '') return $old === $new;
+
+        // Older clients can still upload a fix without an address.
+        return $this->distanceMeters((float) $saved->latitude, (float) $saved->longitude,
+            (float) $incoming['latitude'], (float) $incoming['longitude']) < 25;
+    }
+
+    private function normalizedAddress(?string $value): string
+    {
+        return trim(preg_replace('/[^\pL\pN]+/u', ' ', strtolower(trim($value ?? ''))) ?? '');
     }
 
     private function distanceMeters(float $lat1, float $lon1, float $lat2, float $lon2): float

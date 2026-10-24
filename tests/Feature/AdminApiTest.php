@@ -55,6 +55,25 @@ class AdminApiTest extends TestCase
         $this->assertDatabaseCount('user_locations', 2);
     }
 
+    public function test_address_change_is_saved_even_nearby_and_same_address_is_not_saved_far_away(): void
+    {
+        $user = User::create(['name' => 'Akash', 'phone' => '9876543210', 'password' => 'password123']);
+        $token = $user->createToken('android')->plainTextToken;
+        $this->withToken($token)->postJson('/api/locations', [
+            'latitude' => 28.6139, 'longitude' => 77.2090,
+            'place' => 'Area A', 'city' => 'New Delhi', 'postal_code' => '110001',
+        ])->assertCreated();
+        $this->withToken($token)->postJson('/api/locations', [
+            'latitude' => 28.6150, 'longitude' => 77.2090,
+            'place' => 'Area A', 'city' => 'New Delhi', 'postal_code' => '110001',
+        ])->assertOk()->assertJsonPath('data.unchanged', true);
+        $this->withToken($token)->postJson('/api/locations', [
+            'latitude' => 28.61391, 'longitude' => 77.20901,
+            'place' => 'Area B', 'city' => 'New Delhi', 'postal_code' => '110001',
+        ])->assertCreated();
+        $this->assertDatabaseCount('user_locations', 2);
+    }
+
     public function test_offline_locations_keep_capture_order_and_saved_stay_time(): void
     {
         $user = User::create(['name' => 'Traveler', 'phone' => '9876543210',

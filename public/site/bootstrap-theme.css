@@ -2,3 +2,4 @@
 .card h2{font-size:1.5rem;line-height:1.35}.card.filters{flex-direction:row}input[type=hidden]{display:none!important}
 
 @media(max-width:575.98px){.header-inner{gap:14px}.site-header .brand{white-space:nowrap;font-size:19px;flex-shrink:0}.site-header .button.btn{width:42px;height:42px;min-height:42px;padding:10px;margin-left:auto}.header-download span{display:none}.site-header .brand-icon{flex-shrink:0}.steps article{padding:20px 20px 20px 65px}.steps .step-number{left:18px;top:25px;font-size:29px}}
+.button.light:hover{background:#edf1ff;color:#243bc5}.button.secondary:hover{background:#eef2ff;color:#243bc5}

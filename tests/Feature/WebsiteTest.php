@@ -163,4 +163,15 @@ class WebsiteTest extends TestCase
         $this->withHeader('X-Forwarded-For', '198.51.100.11')
             ->post('/contact', $data)->assertRedirect('/contact');
     }
+
+    public function test_phone_login_limit_survives_a_change_of_client_ip(): void
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+                ->withHeader('X-Forwarded-For', '198.51.100.'.($attempt + 1))
+                ->postJson('/api/login', ['phone' => '0000000000', 'password' => '123456'])->assertUnauthorized();
+        }
+        $this->withHeader('X-Forwarded-For', '198.51.100.99')
+            ->postJson('/api/login', ['phone' => '0000000000', 'password' => '123456'])->assertStatus(429);
+    }
 }

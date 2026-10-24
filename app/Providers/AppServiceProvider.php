@@ -25,7 +25,6 @@ class AppServiceProvider extends ServiceProvider
     {
         // The free Render deployment uses array caching; limits must persist between requests.
         if ($this->app->environment('production')) {
-            config(['cache.limiter' => 'database']);
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
         RateLimiter::for('contact-form', fn (Request $request) => [
@@ -37,12 +36,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             $phone = strtolower(trim((string) $request->input('phone', '')));
             return [Limit::perMinute(20)->by('login-ip|'.$request->ip()),
-                Limit::perMinute(5)->by('login-phone|'.$request->ip().'|'.$phone)];
+                Limit::perMinute(5)->by('login-phone|'.$phone)];
         });
         RateLimiter::for('registration', function (Request $request) {
             $phone = strtolower(trim((string) $request->input('phone', '')));
             return [Limit::perHour(10)->by('registration-ip|'.$request->ip()),
-                Limit::perHour(3)->by('registration-phone|'.$request->ip().'|'.$phone)];
+                Limit::perHour(3)->by('registration-phone|'.$phone)];
         });
         Response::macro('success', function ($message = null, $data = null, $statusCode = 200) {
             return response()->json([

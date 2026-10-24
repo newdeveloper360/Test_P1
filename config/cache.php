@@ -16,6 +16,7 @@ return [
     */
 
     'default' => env('CACHE_STORE', 'database'),
+    'limiter' => env('CACHE_LIMITER', env('APP_ENV') === 'production' ? 'database' : null),
 
     /*
     |--------------------------------------------------------------------------

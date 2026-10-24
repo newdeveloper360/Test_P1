@@ -150,4 +150,17 @@ class WebsiteTest extends TestCase
             ->assertOk()->assertJsonPath('data.discarded', true);
         $this->assertDatabaseCount('user_locations', 0);
     }
+
+    public function test_contact_throttling_separates_clients_behind_the_trusted_proxy(): void
+    {
+        $data = ['name' => 'Reader', 'email' => 'reader@example.com', 'subject' => 'App help',
+            'message' => 'Please help me understand the app.', 'consent' => 1];
+        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+            ->withHeader('X-Forwarded-For', '198.51.100.10');
+        $this->post('/contact', $data)->assertRedirect('/contact');
+        $this->post('/contact', $data)->assertRedirect('/contact');
+        $this->post('/contact', $data)->assertStatus(429);
+        $this->withHeader('X-Forwarded-For', '198.51.100.11')
+            ->post('/contact', $data)->assertRedirect('/contact');
+    }
 }

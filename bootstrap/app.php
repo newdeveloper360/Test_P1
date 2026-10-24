@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: ['127.0.0.1', '::1', '10.0.0.0/8'],
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT);
         $middleware->alias(['active.user' => EnsureUserIsActive::class,
             'app.maintenance' => EnsureNotInMaintenance::class,
             'admin.web' => EnsureAdminWeb::class]);

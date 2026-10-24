@@ -23,6 +23,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The free Render deployment uses array caching; limits must persist between requests.
+        if ($this->app->environment('production')) {
+            config(['cache.limiter' => 'database']);
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+        RateLimiter::for('contact-form', fn (Request $request) => [
+            Limit::perMinute(2)->by('contact-minute|'.$request->ip()),
+            Limit::perHour(5)->by('contact-hour|'.$request->ip()),
+        ]);
+        RateLimiter::for('admin-panel', fn (Request $request) =>
+            Limit::perMinute(120)->by('admin|'.($request->user()?->id ?: $request->ip())));
         RateLimiter::for('login', function (Request $request) {
             $phone = strtolower(trim((string) $request->input('phone', '')));
             return [Limit::perMinute(20)->by('login-ip|'.$request->ip()),

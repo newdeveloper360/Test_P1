@@ -18,6 +18,7 @@ until php artisan migrate --force; do
 done
 
 php artisan db:seed --class=AdminUserSeeder --force
+php artisan db:seed --class=WebsiteSeeder --force
 
 chown -R www-data:www-data storage bootstrap/cache
 exec apache2-foreground

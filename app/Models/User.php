@@ -52,6 +52,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_blocked' => 'boolean',
+            'locations_cleared_at' => 'datetime',
         ];
     }
 

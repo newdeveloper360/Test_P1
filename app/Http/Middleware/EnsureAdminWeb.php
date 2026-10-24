@@ -21,6 +21,10 @@ class EnsureAdminWeb
                 'phone' => 'Admin access is unavailable for this account.',
             ]);
         }
+        if ($request->session()->get('require_password_update')
+                && !$request->routeIs('admin.profile', 'admin.profile.update', 'admin.logout')) {
+            return redirect()->route('admin.profile')->with('success', 'Set a 6-digit password before continuing.');
+        }
         return $next($request);
     }
 }

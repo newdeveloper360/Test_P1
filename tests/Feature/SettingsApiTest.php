@@ -59,9 +59,9 @@ class SettingsApiTest extends TestCase
     {
         for ($i = 0; $i < 5; $i++)
             $this->postJson('/api/login', ['phone' => '9876543210',
-                'password' => 'wrong'])->assertUnauthorized();
+                'password' => '999999'])->assertUnauthorized();
         $this->postJson('/api/login', ['phone' => '9876543210',
-            'password' => 'wrong'])->assertStatus(429);
+            'password' => '999999'])->assertStatus(429);
         for ($i = 0; $i < 3; $i++)
             $this->postJson('/api/user/create', ['name' => '', 'phone' => '9898989898',
                 'password' => '123456'])->assertUnprocessable();

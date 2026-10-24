@@ -39,7 +39,7 @@ class LocationApiTest extends TestCase
             'phone' => '9876543210', 'password' => '123456',
         ])->assertOk()->assertJsonStructure(['data' => ['token']]);
         $this->postJson('/api/login', [
-            'phone' => '9876543210', 'password' => 'incorrect-password',
+            'phone' => '9876543210', 'password' => '999999',
         ])->assertUnauthorized();
     }
 

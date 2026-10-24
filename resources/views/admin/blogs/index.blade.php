@@ -1,0 +1,6 @@
+@extends('admin.layout')
+@section('title','Blog posts')
+@section('actions')<a class="btn primary" href="{{ route('admin.blogs.create') }}">+ Add blog</a>@endsection
+@section('content')
+<div class="card table-wrap"><table class="table"><thead><tr><th>Title</th><th>URL slug</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>@forelse($blogs as $blog)<tr><td><strong>{{ $blog->title }}</strong></td><td>{{ $blog->slug }}</td><td><span class="badge {{ $blog->is_published?'active':'' }}">{{ $blog->is_published?'Published':'Draft' }}</span></td><td>{{ $blog->created_at->format('d M Y') }}</td><td><div class="actions"><a class="btn small" href="{{ route('admin.blogs.edit',$blog) }}">Edit</a>@if($blog->is_published)<a class="btn small" target="_blank" rel="noopener" href="{{ route('site.blog',$blog->slug) }}">View</a>@endif<form method="post" action="{{ route('admin.blogs.destroy',$blog) }}" onsubmit="return confirm('Delete this blog and its featured image permanently?')">@csrf @method('DELETE')<button class="btn danger small">Delete</button></form></div></td></tr>@empty<tr><td class="empty" colspan="5">No blog posts yet. Add your first article and publish it when ready.</td></tr>@endforelse</tbody></table></div><div class="pagination">{{ $blogs->links() }}</div>
+@endsection

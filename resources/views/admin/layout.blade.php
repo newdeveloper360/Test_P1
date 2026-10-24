@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1e35bc">
+    <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', 'Admin') · IP Tracker</title>
     <style>
         :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#172344;background:#f4f7ff}
@@ -29,7 +30,11 @@
             <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">◫ &nbsp; Overview</a>
             <a class="{{ request()->routeIs('admin.accounts.*') ? 'active' : '' }}" href="{{ route('admin.accounts.index') }}">♙ &nbsp; Accounts</a>
             <a class="{{ request()->routeIs('admin.sliders*') ? 'active' : '' }}" href="{{ route('admin.sliders') }}">▣ &nbsp; Sliders</a>
-            <a class="{{ request()->routeIs('admin.settings*') ? 'active' : '' }}" href="{{ route('admin.settings') }}">⚙ &nbsp; App settings</a>
+            <a class="{{ request()->routeIs('admin.blogs.*') ? 'active' : '' }}" href="{{ route('admin.blogs.index') }}">Blog posts</a>
+            <a class="{{ request()->routeIs('admin.pages.*') ? 'active' : '' }}" href="{{ route('admin.pages.index') }}">Website pages</a>
+            <a class="{{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}" href="{{ route('admin.contacts.index') }}">Contact requests</a>
+            <a class="{{ request()->routeIs('admin.settings*') ? 'active' : '' }}" href="{{ route('admin.settings') }}">⚙ &nbsp; Website & app settings</a>
+            <a href="{{ route('site.home') }}" target="_blank" rel="noopener">View website ↗</a>
             <a class="{{ request()->routeIs('admin.profile*') ? 'active' : '' }}" href="{{ route('admin.profile') }}">● &nbsp; My profile</a>
             <form class="mobile-logout" action="{{ route('admin.logout') }}" method="post">@csrf<button type="submit">Sign out</button></form>
         </nav>
@@ -45,5 +50,9 @@
 @else
     @yield('content')
 @endif
+@if($errors->any())
+<script>document.addEventListener('DOMContentLoaded',function(){const errors=@json($errors->messages());Object.entries(errors).forEach(function([key,messages]){const name=key.replace(/\.(\d+)/g,'[$1]');const controls=Array.from(document.querySelectorAll('input,textarea,select'));const control=controls.find(function(input){return input.name===name||input.name===name+'[]'||input.name===key.split('.')[0]+'[]';});if(!control)return;control.setAttribute('aria-invalid','true');const field=control.closest('.field');if(field&&!field.querySelector('.error')){const small=document.createElement('small');small.className='error';small.setAttribute('role','alert');small.textContent=messages[0];field.appendChild(small);}});});</script>
+@endif
+@stack('scripts')
 </body>
 </html>

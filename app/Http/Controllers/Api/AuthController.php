@@ -50,7 +50,7 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'phone' => ['required', 'string', 'regex:/^\+?[0-9]{10,13}$/'],
-            'password' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'regex:/^[0-9]{6}$/'],
         ]);
         $normalized = $this->normalizePhone($data['phone']);
         $user = User::where('phone', $normalized)->first();

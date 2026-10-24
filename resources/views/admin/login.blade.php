@@ -10,7 +10,7 @@
         <form method="post" action="{{ route('admin.login.submit') }}">
             @csrf
             <div class="field"><label for="phone">Admin phone</label><input id="phone" name="phone" inputmode="numeric" autocomplete="username" maxlength="10" value="{{ old('phone') }}" required></div>
-            <div class="field"><label for="password">Password</label><input id="password" type="password" name="password" autocomplete="current-password" required></div>
+            <div class="field"><label for="password">6-digit password</label><input id="password" type="password" name="password" autocomplete="current-password" inputmode="numeric" minlength="6" maxlength="255" required><small>Older admin passwords can sign in once to set a new 6-digit password.</small></div>
             <button class="btn primary" type="submit">Sign in to dashboard →</button>
         </form>
     </div>

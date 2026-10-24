@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\Slider;
 use App\Models\User;
+use App\Support\WebsiteSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,7 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
-            'password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:6', 'max:255'],
         ]);
         if (!Auth::guard('web')->attempt([
             'phone' => $data['phone'], 'password' => $data['password'],
@@ -40,6 +41,10 @@ class AdminController extends Controller
                 ->onlyInput('phone');
         }
         $request->session()->regenerate();
+        if (!preg_match('/^[0-9]{6}$/', $data['password'])) {
+            $request->session()->put('require_password_update', true);
+            return redirect()->route('admin.profile')->with('success', 'Please replace your older password with a 6-digit password to continue.');
+        }
         $request->user()->loginEvents()->create([
             'ip_address' => $request->ip(),
             'device' => substr((string) $request->userAgent(), 0, 255),
@@ -187,15 +192,26 @@ class AdminController extends Controller
         return view('admin.settings', ['setting' => Setting::current()]);
     }
 
+    public function clearLocations(User $user): RedirectResponse
+    {
+        $this->assertAccount($user);
+        $count = DB::transaction(function () use ($user) {
+            $account = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $account->forceFill(['locations_cleared_at' => now('UTC')])->save();
+            return $account->locations()->delete();
+        });
+        return back()->with('success', $count.' location record(s) deleted for '.$user->name.'.');
+    }
+
     public function updateSettings(Request $request): RedirectResponse
     {
-        $data = $request->validate([
+        $data = $request->validate(array_merge([
             'app_name' => ['required', 'string', 'max:60'],
             'banner_text' => ['nullable', 'string', 'max:200'],
             'maintenance_message' => ['nullable', 'string', 'max:200'],
             'android_version_code' => ['sometimes', 'required', 'integer', 'min:1', 'max:2100000000'],
             'android_update_url' => ['nullable', 'url', 'max:2048', 'starts_with:http://,https://'],
-        ]);
+        ], WebsiteSettings::rules()));
         $data['maintenance_mode'] = $request->boolean('maintenance_mode');
         Setting::current()->update($data);
         return back()->with('success', 'App settings saved.');
@@ -295,7 +311,7 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'phone' => ['required', 'regex:/^[0-9]{10}$/', Rule::unique('users', 'phone')->ignore($admin)],
             'current_password' => ['required_with:password', 'nullable', 'string'],
-            'password' => ['nullable', 'confirmed', 'regex:/^[0-9]{6}$/'],
+            'password' => [$request->session()->get('require_password_update') ? 'required' : 'nullable', 'confirmed', 'regex:/^[0-9]{6}$/'],
         ]);
         if (!empty($data['password'])) {
             if (!Hash::check($data['current_password'], $admin->password)) {
@@ -306,6 +322,7 @@ class AdminController extends Controller
         $admin->name = $data['name'];
         $admin->phone = $data['phone'];
         $admin->save();
+        if (!empty($data['password'])) $request->session()->forget('require_password_update');
         return back()->with('success', 'Profile updated.');
     }
 

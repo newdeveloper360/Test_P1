@@ -1,0 +1,4 @@
+@extends('site.layout')
+@section('content')
+<section class="page-intro wrap"><span class="eyebrow">THE JOURNAL</span><h1>Ideas for a more<br>connected day.</h1><p class="lead">Updates, guides and useful things to know about {{ $siteName }}.</p></section><section class="wrap blog-section">@if($blogs->isEmpty())<div class="empty-state"><span class="icon-tile">@include('site.icon',['name'=>'pin'])</span><h2>Our first story is on its way.</h2><p>Check back here for app updates and helpful guides.</p><a class="text-link" href="{{ route('site.features') }}">Explore app features @include('site.icon',['name'=>'arrow'])</a></div>@else<div class="blog-grid">@foreach($blogs as $article)@include('site.blog-card')@endforeach</div><div class="pagination">{{ $blogs->links('site.pagination') }}</div>@endif</section>
+@endsection

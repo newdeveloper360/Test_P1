@@ -37,6 +37,11 @@ class LocationController extends Controller
             ? CarbonImmutable::parse($data['captured_at'])->utc()->toDateTimeString()
             : now('UTC')->toDateTimeString();
         return DB::transaction(function () use ($request, $data): JsonResponse {
+            $account = $request->user()->newQuery()->whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
+            if ($account->locations_cleared_at && CarbonImmutable::parse($data['captured_at'])
+                    ->lessThanOrEqualTo($account->locations_cleared_at)) {
+                return Response::success('This older record was cleared by the administrator.', ['discarded' => true]);
+            }
             if (isset($data['client_fix_id'])) {
                 $existing = $request->user()->locations()
                     ->where('client_fix_id', $data['client_fix_id'])->first();
@@ -77,6 +82,9 @@ class LocationController extends Controller
 
     private function sameLocation($saved, array $incoming): bool
     {
+        $oldAddress = $this->normalizedAddress($saved->full_address);
+        $newAddress = $this->normalizedAddress($incoming['full_address'] ?? null);
+        if ($oldAddress !== '' && $newAddress !== '') return $oldAddress === $newAddress;
         $compared = false;
         foreach (['place', 'street', 'city', 'district', 'state', 'postal_code', 'country'] as $field) {
             $old = $this->normalizedAddress($saved->{$field});

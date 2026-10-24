@@ -64,6 +64,10 @@ class AdminController extends Controller
     public function dashboard(): View
     {
         return view('admin.dashboard', [
+            'active' => User::whereIn('role', ['user', 'member'])->where('is_active', true)->where('is_blocked', false)->count(),
+            'sliderCount' => Slider::count(),
+            'blogCount' => \App\Models\Blog::where('is_published', true)->count(),
+            'pendingContacts' => \App\Models\ContactMessage::where('status', 'pending')->count(),
             'inactive' => User::whereIn('role', ['user', 'member'])->where('is_active', false)->count(),
             'newAdvice' => \App\Models\Advice::where('status', 'new')->count(),
             'totalUsers' => User::where('role', 'user')->count(),
@@ -95,7 +99,7 @@ class AdminController extends Controller
         if (!empty($filters['role'])) $query->where('role', $filters['role']);
         if (($filters['status'] ?? '') === 'blocked') $query->where('is_blocked', true);
         if (($filters['status'] ?? '') === 'inactive') $query->where('is_active', false);
-        if (($filters['status'] ?? '') === 'active') $query->where('is_active', true)->where('is_blocked', false)->where('is_active', true);
+        if (($filters['status'] ?? '') === 'active') $query->where('is_active', true)->where('is_blocked', false);
         return view('admin.accounts', [
             'accounts' => $query->with('invitedBy:id,name')
                 ->withCount(['members', 'locations'])->withMax('locations', 'captured_at')

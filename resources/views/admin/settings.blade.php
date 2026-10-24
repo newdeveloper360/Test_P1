@@ -1,6 +1,7 @@
 @extends('admin.layout')
 @section('title','Website & app settings')
 @section('content')
+<div class="seo-links"><article class="card seo-card">@include('admin.icon',['name'=>'pages'])<div><h3>Website sitemap</h3><p>Public pages and published blog URLs.</p></div><a class="btn small" href="{{ route('site.sitemap') }}" target="_blank" rel="noopener">Open sitemap.xml ↗</a></article><article class="card seo-card">@include('admin.icon',['name'=>'settings'])<div><h3>Search crawler rules</h3><p>Admin and API paths stay disallowed.</p></div><a class="btn small" href="{{ route('site.robots') }}" target="_blank" rel="noopener">Open robots.txt ↗</a></article></div>
 <form method="post" action="{{ route('admin.settings.update') }}" class="card">@csrf @method('PATCH')
 <h2 style="margin-top:0">Branding & downloads</h2><div class="form-grid">
 @foreach(['app_name'=>['App name',60],'site_name'=>['Website name',100],'site_url'=>['Website URL',2048],'android_update_url'=>['External APK download URL (optional)',2048]] as $field=>[$label,$max])<div class="field"><label for="{{ $field }}">{{ $label }}</label><input class="form-control" id="{{ $field }}" name="{{ $field }}" maxlength="{{ $max }}" value="{{ old($field,$setting->$field) }}" @if($field==='app_name') required @endif @if(in_array($field,['site_url','android_update_url'])) type="url" @endif>@error($field)<small class="error">{{ $message }}</small>@enderror @if($field==='android_update_url')<small>Leave empty to download the APK included with this deployment.</small>@endif</div>@endforeach

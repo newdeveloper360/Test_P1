@@ -16,7 +16,7 @@
     <div class="field"><label for="image_{{ $slider->id }}">Replace image (optional)</label><input class="form-control" id="image_{{ $slider->id }}" type="file" name="image" accept="image/jpeg,image/png,image/webp"></div>
     <label class="check" style="margin-top:13px"><input type="checkbox" name="is_active" value="1" @checked($slider->is_active)> Active in app</label>
     <div class="form-actions"><button class="btn primary" type="submit">Save slider</button></div>
-</form><form method="post" action="{{ route('admin.sliders.destroy',$slider) }}" onsubmit="return confirm('Delete this slider?')" style="margin-top:10px">@csrf @method('DELETE')<button class="btn danger" type="submit">Delete slider</button></form></div>
+</form><form method="post" action="{{ route('admin.sliders.destroy',$slider) }}" data-confirm="Delete this slider?" style="margin-top:10px">@csrf @method('DELETE')<button class="btn danger" type="submit">Delete slider</button></form></div>
 @empty<div class="card empty">No sliders yet. Upload an image above to get started.</div>@endforelse
 </div>
 @endsection

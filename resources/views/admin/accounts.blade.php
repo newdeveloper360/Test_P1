@@ -1,7 +1,8 @@
 @extends('admin.layout')
-@section('title', 'Accounts')
-@section('actions')<a class="btn primary" href="{{ route('admin.accounts.create') }}">+ Add account</a>@endsection
+@section('title', 'Users')
+@section('actions')<a class="btn primary" href="{{ route('admin.accounts.create') }}">+ Add user</a>@endsection
 @section('content')
+<div class="tabs-row">@foreach([''=>'All accounts','user'=>'Users','member'=>'Members'] as $role=>$label)<a class="filter-tab {{ request('role','')===$role?'active':'' }}" href="{{ route('admin.accounts.index',array_merge(request()->except('page','role'),$role?['role'=>$role]:[])) }}">{{ $label }}</a>@endforeach</div>
 <form method="get" action="{{ route('admin.accounts.index') }}" class="card filters">
     <div class="field grow"><label for="q">Search</label><input class="form-control" id="q" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Name or phone"></div>
     <div class="field"><label for="role">Role</label><select class="form-select" id="role" name="role"><option value="">All roles</option><option value="user" @selected(($filters['role'] ?? '')==='user')>Users</option><option value="member" @selected(($filters['role'] ?? '')==='member')>Members</option></select></div>
@@ -9,18 +10,16 @@
     <button class="btn primary" type="submit">Apply filters</button><a class="btn" href="{{ route('admin.accounts.index') }}">Clear</a>
 </form>
 <div class="section-heading"><h2>{{ $accounts->total() }} account{{ $accounts->total()===1?'':'s' }}</h2></div>
-<div class="card table-wrap table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Account</th><th>Role</th><th>Connection</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-@forelse($accounts as $account)
-<tr>
-    <td><span class="avatar">{{ strtoupper(substr($account->name,0,1)) }}</span><a href="{{ route('admin.accounts.show',$account) }}">{{ $account->name }}</a><br><span class="muted">{{ $account->phone }}</span></td>
-    <td><span class="badge {{ $account->role }}">{{ ucfirst($account->role) }}</span></td>
-    <td>{{ $account->role==='user' ? $account->members_count.' members' : ($account->invitedBy?->name ?: 'No owner') }}</td>
-    <td>{{ $account->locations_count }} records<br><span class="muted">{{ $account->locations_max_captured_at ? \Carbon\Carbon::parse($account->locations_max_captured_at)->diffForHumans() : 'No update' }}</span></td>
-    <td><span class="badge {{ $account->is_blocked?'blocked':($account->is_active?'active':'blocked') }}">{{ $account->is_blocked?'Blocked':($account->is_active?'Active':'Inactive') }}</span></td>
-    <td class="actions"><form method="post" action="{{ route('admin.accounts.active',$account) }}" onsubmit="return confirm('Change this account status? Deactivation signs out all app sessions.');">@csrf @method('PATCH')<input type="hidden" name="is_active" value="{{ $account->is_active ? 0 : 1 }}"><button class="btn small {{ $account->is_active?'danger':'primary' }}">{{ $account->is_active?'Deactivate':'Activate' }}</button></form><a class="btn small" href="{{ route('admin.accounts.show',$account) }}">View</a><a class="btn small" href="{{ route('admin.accounts.edit',$account) }}">Edit</a><form method="post" action="{{ route('admin.accounts.block',$account) }}">@csrf @method('PATCH')<button class="btn small {{ $account->is_blocked?'':'danger' }}" type="submit">{{ $account->is_blocked?'Unblock':'Block' }}</button></form><form method="post" action="{{ route('admin.accounts.locations.destroy',$account) }}" onsubmit="return confirm('Permanently delete ALL location history for this account? This cannot be undone.');">@csrf @method('DELETE')<button class="btn small danger" type="submit" @disabled(!$account->locations_count)>Delete all history</button></form></td>
-</tr>
-@empty<tr><td colspan="6" class="empty">No accounts match these filters.</td></tr>@endforelse
-</tbody></table></div>
+<div class="card table-wrap"><table class="table align-middle"><thead><tr><th>ID</th><th>Account</th><th>Role</th><th>Connected to</th><th>Locations</th><th>Status</th><th>Actions</th></tr></thead><tbody>@forelse($accounts as $account)<tr>
+<td><span class="muted">#{{ str_pad($account->id,4,'0',STR_PAD_LEFT) }}</span></td>
+<td><div class="person-cell"><span class="avatar">{{ mb_strtoupper(mb_substr($account->name,0,1)) }}</span><div><a href="{{ route('admin.accounts.show',$account) }}">{{ $account->name }}</a><small>{{ $account->phone }}</small></div></div></td>
+<td><span class="badge {{ $account->role }}">{{ ucfirst($account->role) }}</span></td><td>{{ $account->role==='user'?$account->members_count.' members':($account->invitedBy?->name ?: 'No owner') }}</td><td><strong>{{ $account->locations_count }} records</strong><small class="muted d-block">{{ $account->locations_max_captured_at?\Carbon\Carbon::parse($account->locations_max_captured_at)->diffForHumans():'No update' }}</small></td><td><span class="badge {{ $account->is_blocked?'blocked':($account->is_active?'active':'inactive') }}">{{ $account->is_blocked?'Blocked':($account->is_active?'Active':'Inactive') }}</span></td><td><div class="actions flex-nowrap"><a class="btn small" href="{{ route('admin.accounts.show',$account) }}">View</a><button type="button" class="btn small icon-btn" data-bs-toggle="modal" data-bs-target="#manage-{{ $account->id }}" aria-label="Manage {{ $account->name }}">⋯</button></div></td>
+</tr>@empty<tr><td colspan="7" class="empty">No accounts match these filters.</td></tr>@endforelse</tbody></table></div>
 <div class="pagination">{{ $accounts->links() }}</div>
+@foreach($accounts as $account)<div class="modal fade" id="manage-{{ $account->id }}" tabindex="-1" aria-labelledby="manage-title-{{ $account->id }}" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="manage-title-{{ $account->id }}">Manage {{ $account->name }}</h2><button class="btn-close" data-bs-dismiss="modal" aria-label="Close account actions"></button></div><div class="modal-body"><p class="muted small">{{ $account->phone }} · {{ ucfirst($account->role) }}</p><div class="action-grid">
+<a class="btn" href="{{ route('admin.accounts.edit',$account) }}">Edit account</a><a class="btn" href="{{ route('admin.accounts.locations',$account) }}">View location history</a>
+<form method="post" action="{{ route('admin.accounts.active',$account) }}" data-confirm="Change this account's status? Deactivating signs out all app sessions.">@csrf @method('PATCH')<input type="hidden" name="is_active" value="{{ $account->is_active?0:1 }}"><button class="btn {{ $account->is_active?'danger':'primary' }}">{{ $account->is_active?'Deactivate account':'Activate account' }}</button></form>
+<form method="post" action="{{ route('admin.accounts.block',$account) }}" data-confirm="{{ $account->is_blocked?'Allow this account to sign in again?':'Block this account and sign out its app sessions?' }}">@csrf @method('PATCH')<button class="btn {{ $account->is_blocked?'':'danger' }}">{{ $account->is_blocked?'Unblock account':'Block account' }}</button></form>
+<form method="post" action="{{ route('admin.accounts.locations.destroy',$account) }}" data-confirm="Permanently delete ALL location history for this account? This cannot be undone.">@csrf @method('DELETE')<button class="btn danger" @disabled(!$account->locations_count)>Delete all history</button></form>
+<form method="post" action="{{ route('admin.accounts.destroy',$account) }}" data-confirm="Permanently delete this account and its location records? This cannot be undone.">@csrf @method('DELETE')<button class="btn danger">Delete account</button></form></div></div></div></div></div>@endforeach
 @endsection
-

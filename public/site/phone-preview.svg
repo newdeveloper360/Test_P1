@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="370" height="740" viewBox="0 0 370 740" fill="none">
+<defs>
+<linearGradient id="edge" x1="0" y1="0" x2="370" y2="740"><stop stop-color="#7c879b"/><stop offset=".2" stop-color="#131d35"/><stop offset=".6" stop-color="#3d495e"/><stop offset="1" stop-color="#10182a"/></linearGradient>
+<linearGradient id="screen" x1="40" y1="30" x2="330" y2="710"><stop stop-color="#fbfcff"/><stop offset="1" stop-color="#eef2fa"/></linearGradient>
+<linearGradient id="blue" x1="40" y1="75" x2="320" y2="190"><stop stop-color="#243bc5"/><stop offset="1" stop-color="#1735c7"/></linearGradient>
+<clipPath id="screenClip"><rect x="20" y="16" width="330" height="706" rx="42"/></clipPath>
+<clipPath id="mapClip"><rect x="38" y="201" width="294" height="195" rx="17"/></clipPath>
+</defs>
+<rect x="1" y="142" width="5" height="38" rx="2" fill="#28344a"/><rect x="1" y="193" width="5" height="65" rx="2" fill="#28344a"/><rect x="364" y="178" width="5" height="91" rx="2" fill="#28344a"/>
+<rect x="5" y="1" width="360" height="738" rx="55" fill="url(#edge)"/>
+<rect x="11" y="7" width="348" height="726" rx="49" fill="#10182a" stroke="#a8afbd" stroke-opacity=".45"/>
+<g clip-path="url(#screenClip)">
+<rect x="20" y="16" width="330" height="706" fill="url(#screen)"/>
+<g font-family="Arial, sans-serif">
+<text x="43" y="45" fill="#1b2942" font-size="12" font-weight="700">9:41</text>
+<path d="M290 34v8m5-11v11m5-15v15" stroke="#1b2942" stroke-width="2.6" stroke-linecap="round"/><rect x="310" y="31" width="20" height="10" rx="3" stroke="#1b2942" stroke-width="1.3"/><rect x="312" y="33" width="14" height="6" rx="1" fill="#1b2942"/>
+<rect x="38" y="73" width="294" height="108" rx="19" fill="url(#blue)"/>
+<circle cx="304" cy="83" r="58" fill="white" fill-opacity=".05"/><circle cx="286" cy="126" r="72" stroke="white" stroke-opacity=".07" stroke-width="20"/>
+<text x="55" y="99" font-size="10" fill="#d6e0ff">WELCOME BACK</text><text x="55" y="123" font-size="21" font-weight="700" fill="white">My location</text>
+<text x="55" y="151" font-size="10" fill="#e0e6ff">Your day, clearly connected.</text>
+<circle cx="302" cy="112" r="18" fill="white" fill-opacity=".15"/><text x="296" y="118" font-size="17" font-weight="700" fill="white">U</text>
+<g clip-path="url(#mapClip)">
+<rect x="38" y="201" width="294" height="195" fill="#e9efe9"/>
+<path d="M35 210h65l33 67-36 68-70-20zM252 193l97 9-3 84-72-12z" fill="#cfded0"/>
+<path d="M260 342c-23-27-53-34-68-10s-3 47-32 79h201V307c-48-3-71 64-101 35z" fill="#c4deec"/>
+<path d="M35 220l312 148M97 194l74 217M39 346l301-95M273 193l-63 208" stroke="#d3dcd7" stroke-width="17"/>
+<path d="M35 220l312 148M97 194l74 217M39 346l301-95M273 193l-63 208" stroke="white" stroke-width="12"/>
+<path d="M55 273l246 115M35 315l293-105M173 192l59 214" stroke="#dfe6e0" stroke-width="3"/>
+<text x="64" y="254" font-size="8" fill="#87998b">PARK</text><text x="246" y="305" font-size="8" fill="#7c8c99" transform="rotate(-18 246 305)">MAIN ROAD</text>
+<circle cx="183" cy="297" r="38" fill="#1735c7" fill-opacity=".08"/><circle cx="183" cy="297" r="24" fill="#1735c7" fill-opacity=".12"/><circle cx="183" cy="297" r="12" fill="#1735c7" stroke="white" stroke-width="4"/>
+</g>
+<rect x="53" y="212" width="81" height="23" rx="11" fill="white"/><circle cx="65" cy="223" r="3" fill="#278f7a"/><text x="74" y="227" font-size="8" font-weight="700" fill="#203657">CURRENT PLACE</text>
+<rect x="38" y="413" width="294" height="146" rx="17" fill="white" stroke="#e2e7f2"/>
+<text x="55" y="438" font-size="9" letter-spacing="1" fill="#7c89a0">LOCATION DETAILS</text>
+<text x="55" y="463" font-size="16" font-weight="700" fill="#1b2942">Your address at a glance</text>
+<text x="55" y="486" font-size="11" fill="#7c89a0">Area · City · District</text><text x="55" y="506" font-size="11" fill="#7c89a0">State · PIN code · Country</text>
+<path d="M55 521h259" stroke="#edf0f6"/>
+<text x="55" y="542" font-size="10" fill="#1735c7" font-weight="700">View on Google Maps</text><path d="M294 532h12v12m0-12-13 13" stroke="#1735c7" stroke-width="1.5"/>
+<rect x="38" y="573" width="294" height="62" rx="17" fill="white" stroke="#e2e7f2"/>
+<rect x="52" y="586" width="36" height="36" rx="11" fill="#edf1ff"/><circle cx="70" cy="604" r="9" stroke="#1735c7" stroke-width="1.7"/><path d="M70 599v5l4 2" stroke="#1735c7" stroke-width="1.7" stroke-linecap="round"/>
+<text x="100" y="598" font-size="9" fill="#7c89a0">TIME AT THIS PLACE</text><text x="100" y="617" font-size="13" font-weight="700" fill="#1b2942">Stay time, made clear</text>
+<path d="M20 651h330" stroke="#e2e7f2"/><rect x="20" y="652" width="330" height="71" fill="white"/>
+<g stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+<path d="M71 667c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0z" stroke="#1735c7"/><circle cx="63" cy="667" r="2.5" stroke="#1735c7"/>
+<circle cx="144" cy="670" r="8" stroke="#9aa5b9"/><path d="M144 665v5l3 2" stroke="#9aa5b9"/>
+<circle cx="225" cy="666" r="4" stroke="#9aa5b9"/><path d="M217 679v-3a8 8 0 0 1 16 0v3" stroke="#9aa5b9"/>
+<circle cx="306" cy="667" r="4" stroke="#9aa5b9"/><path d="M300 678a6 6 0 0 1 12 0" stroke="#9aa5b9"/>
+</g>
+<text x="52" y="695" fill="#1735c7" font-size="8" font-weight="700">Home</text><text x="132" y="695" fill="#9aa5b9" font-size="8">History</text><text x="209" y="695" fill="#9aa5b9" font-size="8">Members</text><text x="294" y="695" fill="#9aa5b9" font-size="8">Profile</text>
+</g></g>
+<rect x="130" y="22" width="110" height="25" rx="13" fill="#10182a"/><circle cx="222" cy="34" r="4" fill="#233b5c"/><rect x="140" y="710" width="90" height="4" rx="2" fill="#10182a"/>
+</svg>

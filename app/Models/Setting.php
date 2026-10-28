@@ -12,7 +12,8 @@ class Setting extends Model
         'support_email', 'facebook_url', 'instagram_url', 'x_url', 'linkedin_url', 'youtube_url'];
 
     protected $casts = ['maintenance_mode' => 'boolean', 'android_version_code' => 'integer'];
-    protected $hidden = ['logo_path', 'banner_image_path'];
+
+    protected $hidden = ['logo_path', 'banner_image_path', 'logo_data', 'logo_mime', 'banner_image_data', 'banner_image_mime'];
 
     public static function current(): self
     {

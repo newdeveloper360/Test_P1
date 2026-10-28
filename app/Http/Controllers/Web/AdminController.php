@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Advice;
+use App\Models\Blog;
+use App\Models\ContactMessage;
 use App\Models\Setting;
 use App\Models\Slider;
 use App\Models\User;
+use App\Support\LocationHistoryFilters;
+use App\Support\StoredImage;
 use App\Support\WebsiteSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +29,7 @@ class AdminController extends Controller
         if (Auth::guard('web')->user()?->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
+
         return view('admin.login');
     }
 
@@ -33,7 +39,7 @@ class AdminController extends Controller
             'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'password' => ['required', 'string', 'min:6', 'max:255'],
         ]);
-        if (!Auth::guard('web')->attempt([
+        if (! Auth::guard('web')->attempt([
             'phone' => $data['phone'], 'password' => $data['password'],
             'role' => 'admin', 'is_blocked' => false, 'is_active' => true,
         ])) {
@@ -41,8 +47,9 @@ class AdminController extends Controller
                 ->onlyInput('phone');
         }
         $request->session()->regenerate();
-        if (!preg_match('/^[0-9]{6}$/', $data['password'])) {
+        if (! preg_match('/^[0-9]{6}$/', $data['password'])) {
             $request->session()->put('require_password_update', true);
+
             return redirect()->route('admin.profile')->with('success', 'Please replace your older password with a 6-digit password to continue.');
         }
         $request->user()->loginEvents()->create([
@@ -50,6 +57,7 @@ class AdminController extends Controller
             'device' => substr((string) $request->userAgent(), 0, 255),
             'logged_in_at' => now(),
         ]);
+
         return redirect()->intended(route('admin.dashboard'));
     }
 
@@ -58,6 +66,7 @@ class AdminController extends Controller
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('admin.login');
     }
 
@@ -66,10 +75,10 @@ class AdminController extends Controller
         return view('admin.dashboard', [
             'active' => User::whereIn('role', ['user', 'member'])->where('is_active', true)->where('is_blocked', false)->count(),
             'sliderCount' => Slider::count(),
-            'blogCount' => \App\Models\Blog::where('is_published', true)->count(),
-            'pendingContacts' => \App\Models\ContactMessage::where('status', 'pending')->count(),
+            'blogCount' => Blog::where('is_published', true)->count(),
+            'pendingContacts' => ContactMessage::where('status', 'pending')->count(),
             'inactive' => User::whereIn('role', ['user', 'member'])->where('is_active', false)->count(),
-            'newAdvice' => \App\Models\Advice::where('status', 'new')->count(),
+            'newAdvice' => Advice::where('status', 'new')->count(),
             'totalUsers' => User::where('role', 'user')->count(),
             'totalMembers' => User::where('role', 'member')->count(),
             'blocked' => User::whereIn('role', ['user', 'member'])->where('is_blocked', true)->count(),
@@ -91,15 +100,24 @@ class AdminController extends Controller
             'status' => ['nullable', Rule::in(['active', 'inactive', 'blocked'])],
         ]);
         $query = User::whereIn('role', ['user', 'member']);
-        if (!empty($filters['q'])) {
+        if (! empty($filters['q'])) {
             $term = $filters['q'];
-            $query->where(fn ($q) => $q->where('name', 'like', "%{$term}%")
-                ->orWhere('phone', 'like', "%{$term}%"));
+            $query->where(fn ($q) => $q->whereLike('name', "%{$term}%")
+                ->orWhereLike('phone', "%{$term}%"));
         }
-        if (!empty($filters['role'])) $query->where('role', $filters['role']);
-        if (($filters['status'] ?? '') === 'blocked') $query->where('is_blocked', true);
-        if (($filters['status'] ?? '') === 'inactive') $query->where('is_active', false);
-        if (($filters['status'] ?? '') === 'active') $query->where('is_active', true)->where('is_blocked', false);
+        if (! empty($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
+        if (($filters['status'] ?? '') === 'blocked') {
+            $query->where('is_blocked', true);
+        }
+        if (($filters['status'] ?? '') === 'inactive') {
+            $query->where('is_active', false);
+        }
+        if (($filters['status'] ?? '') === 'active') {
+            $query->where('is_active', true)->where('is_blocked', false);
+        }
+
         return view('admin.accounts', [
             'accounts' => $query->with('invitedBy:id,name')
                 ->withCount(['members', 'locations'])->withMax('locations', 'captured_at')
@@ -129,19 +147,21 @@ class AdminController extends Controller
         if ($data['role'] === 'user') {
             unset($data['invited_by_user_id']);
             $data['invite_code'] = $this->newInviteCode();
-        } elseif (!User::whereKey($data['invited_by_user_id'])
+        } elseif (! User::whereKey($data['invited_by_user_id'])
             ->where('role', 'user')->where('is_blocked', false)->where('is_active', true)->exists()) {
             throw ValidationException::withMessages([
                 'invited_by_user_id' => 'Select an active user for this member.',
             ]);
         }
         $account = User::create($data);
+
         return redirect()->route('admin.accounts.show', $account)->with('success', 'Account created.');
     }
 
     public function showAccount(User $user): View
     {
         $this->assertAccount($user);
+
         return view('admin.account', [
             'account' => $user->load('invitedBy:id,name,phone')->loadCount(['members', 'locations']),
             'members' => $user->role === 'user' ? $user->members()->orderBy('name')->get() : collect(),
@@ -153,6 +173,7 @@ class AdminController extends Controller
     public function editAccount(User $user): View
     {
         $this->assertAccount($user);
+
         return view('admin.account-form', ['account' => $user, 'owners' => collect()]);
     }
 
@@ -164,8 +185,11 @@ class AdminController extends Controller
             'phone' => ['required', 'regex:/^[6-9][0-9]{9}$/', Rule::unique('users', 'phone')->ignore($user)],
             'password' => ['nullable', 'regex:/^[0-9]{6}$/'],
         ]);
-        if (empty($data['password'])) unset($data['password']);
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
         $user->update($data);
+
         return redirect()->route('admin.accounts.show', $user)->with('success', 'Account updated.');
     }
 
@@ -174,15 +198,21 @@ class AdminController extends Controller
         $this->assertAccount($user);
         $data = $request->validate(['is_active' => ['required', 'boolean']]);
         $user->update(['is_active' => $data['is_active']]);
-        if (!$user->is_active) $user->tokens()->delete();
+        if (! $user->is_active) {
+            $user->tokens()->delete();
+        }
+
         return back()->with('success', $user->is_active ? 'Account activated.' : 'Account deactivated. All app sessions signed out.');
     }
 
     public function toggleBlock(User $user): RedirectResponse
     {
         $this->assertAccount($user);
-        $user->update(['is_blocked' => !$user->is_blocked]);
-        if ($user->is_blocked) $user->tokens()->delete();
+        $user->update(['is_blocked' => ! $user->is_blocked]);
+        if ($user->is_blocked) {
+            $user->tokens()->delete();
+        }
+
         return back()->with('success', $user->is_blocked ? 'Account blocked.' : 'Account unblocked.');
     }
 
@@ -191,18 +221,16 @@ class AdminController extends Controller
         $this->assertAccount($user);
         $user->tokens()->delete();
         $user->delete();
+
         return redirect()->route('admin.accounts.index')->with('success', 'Account deleted.');
     }
 
     public function locations(Request $request, User $user): View
     {
         $this->assertAccount($user);
-        $data = $request->validate(['q'=>['nullable','string','max:100'], 'from'=>['nullable','date_format:Y-m-d'], 'to'=>['nullable','date_format:Y-m-d',Rule::when($request->filled('from'),'after_or_equal:from')]]);
-        $query = $user->locations();
-        if (!empty($data['q'])) $query->where(fn($q)=>$q->where('full_address','like','%'.$data['q'].'%')->orWhere('city','like','%'.$data['q'].'%'));
-        if (!empty($data['from'])) $query->whereDate('captured_at','>=',$data['from']);
-        if (!empty($data['to'])) $query->whereDate('captured_at','<=',$data['to']);
-        return view('admin.locations', ['account'=>$user,'locations'=>$query->orderByDesc('captured_at')->orderByDesc('id')->paginate(30)->withQueryString()]);
+        $query = LocationHistoryFilters::apply($user->locations(), $request);
+
+        return view('admin.locations', ['account' => $user, 'locations' => $query->orderByDesc('captured_at')->orderByDesc('id')->paginate(30)->withQueryString()]);
     }
 
     public function settings(): View
@@ -215,9 +243,13 @@ class AdminController extends Controller
         $this->assertAccount($user);
         $count = DB::transaction(function () use ($user) {
             $account = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
-            $account->forceFill(['locations_cleared_at' => now('UTC')])->save();
+            // The legacy users timestamp stores seconds; round UP so subsecond offline fixes cannot reappear.
+            $account->forceFill(['locations_cleared_at' => now('UTC')->ceilSecond()])->save();
+            $account->locationFixes()->delete();
+
             return $account->locations()->delete();
         });
+
         return back()->with('success', $count.' location record(s) deleted for '.$user->name.'.');
     }
 
@@ -232,6 +264,7 @@ class AdminController extends Controller
         ], WebsiteSettings::rules()));
         $data['maintenance_mode'] = $request->boolean('maintenance_mode');
         Setting::current()->update($data);
+
         return back()->with('success', 'App settings saved.');
     }
 
@@ -240,27 +273,38 @@ class AdminController extends Controller
         abort_unless(in_array($type, ['logo', 'banner'], true), 404);
         $request->validate(['image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048']]);
         $path = $request->file('image')->store('app-branding', 'public');
-        if (!$path) return back()->withErrors(['image' => 'Could not save the image.']);
+        if (! $path) {
+            return back()->withErrors(['image' => 'Could not save the image.']);
+        }
         $setting = Setting::current();
         $pathField = $type === 'logo' ? 'logo_path' : 'banner_image_path';
         $urlField = $type === 'logo' ? 'logo_url' : 'banner_image_url';
         $oldPath = $setting->$pathField;
+        $prefix = $type === 'logo' ? 'logo' : 'banner_image';
+        $setting->{$prefix.'_data'} = base64_encode($request->file('image')->get());
+        $setting->{$prefix.'_mime'} = $request->file('image')->getMimeType();
         $setting->$pathField = $path;
         $setting->$urlField = '/api/settings/image/'.$type.'?v='.time();
         $setting->save();
-        if ($oldPath) Storage::disk('public')->delete($oldPath);
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
         return back()->with('success', ucfirst($type).' image updated.');
     }
 
-    public function sliders(): View
+    public function sliders(Request $request): View
     {
-        return view('admin.sliders', ['sliders' => Slider::orderBy('sort_order')->orderBy('id')->get()]);
+        $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'status' => ['nullable', Rule::in(['active', 'inactive'])]]);
+        $query = Slider::query()->when($data['q'] ?? null, fn ($q, $term) => $q->whereLike('title', '%'.$term.'%'))
+            ->when($data['status'] ?? null, fn ($q, $status) => $q->where('is_active', $status === 'active'));
+
+        return view('admin.sliders', ['sliders' => $query->orderBy('sort_order')->orderBy('id')->paginate(20)->withQueryString()]);
     }
 
     public function sliderImage(Slider $slider)
     {
-        abort_unless(Storage::disk('public')->exists($slider->image_path), 404);
-        return Storage::disk('public')->response($slider->image_path);
+        return StoredImage::response($slider->image_data, $slider->image_mime, $slider->image_path);
     }
 
     public function storeSliders(Request $request): RedirectResponse
@@ -276,16 +320,22 @@ class AdminController extends Controller
                 $order = (int) Slider::max('sort_order');
                 foreach ($request->file('images') as $image) {
                     $path = $image->store('app-sliders', 'public');
-                    if (!$path) throw new \RuntimeException('Could not save slider image.');
+                    if (! $path) {
+                        throw new \RuntimeException('Could not save slider image.');
+                    }
                     $paths[] = $path;
-                    Slider::create(['image_path' => $path, 'title' => $data['title'] ?? null,
+                    Slider::create(['image_path' => $path, 'image_data' => base64_encode($image->get()), 'image_mime' => $image->getMimeType(), 'title' => $data['title'] ?? null,
                         'sort_order' => ++$order, 'is_active' => true]);
                 }
             });
         } catch (\Throwable $error) {
-            foreach ($paths as $path) Storage::disk('public')->delete($path);
+            foreach ($paths as $path) {
+                Storage::disk('public')->delete($path);
+            }
+
             return back()->withErrors(['images' => 'Could not save slider images.']);
         }
+
         return back()->with('success', count($paths).' slider image(s) added.');
     }
 
@@ -300,12 +350,19 @@ class AdminController extends Controller
         $oldPath = null;
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('app-sliders', 'public');
-            if (!$path) return back()->withErrors(['image' => 'Could not save slider image.']);
+            if (! $path) {
+                return back()->withErrors(['image' => 'Could not save slider image.']);
+            }
             $oldPath = $slider->image_path;
             $data['image_path'] = $path;
+            $data['image_data'] = base64_encode($request->file('image')->get());
+            $data['image_mime'] = $request->file('image')->getMimeType();
         }
         $slider->update($data);
-        if ($oldPath) Storage::disk('public')->delete($oldPath);
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
         return back()->with('success', 'Slider updated.');
     }
 
@@ -314,6 +371,7 @@ class AdminController extends Controller
         $path = $slider->image_path;
         $slider->delete();
         Storage::disk('public')->delete($path);
+
         return back()->with('success', 'Slider deleted.');
     }
 
@@ -331,8 +389,8 @@ class AdminController extends Controller
             'current_password' => ['required_with:password', 'nullable', 'string'],
             'password' => [$request->session()->get('require_password_update') ? 'required' : 'nullable', 'confirmed', 'regex:/^[0-9]{6}$/'],
         ]);
-        if (!empty($data['password'])) {
-            if (!Hash::check($data['current_password'], $admin->password)) {
+        if (! empty($data['password'])) {
+            if (! Hash::check($data['current_password'], $admin->password)) {
                 return back()->withErrors(['current_password' => 'Current password is incorrect.']);
             }
             $admin->password = $data['password'];
@@ -340,7 +398,10 @@ class AdminController extends Controller
         $admin->name = $data['name'];
         $admin->phone = $data['phone'];
         $admin->save();
-        if (!empty($data['password'])) $request->session()->forget('require_password_update');
+        if (! empty($data['password'])) {
+            $request->session()->forget('require_password_update');
+        }
+
         return back()->with('success', 'Profile updated.');
     }
 
@@ -354,6 +415,7 @@ class AdminController extends Controller
         do {
             $code = (string) random_int(100000, 999999);
         } while (User::where('invite_code', $code)->exists());
+
         return $code;
     }
 }

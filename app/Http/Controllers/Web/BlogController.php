@@ -8,22 +8,39 @@ use App\Support\CleanHtml;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BlogController extends Controller
 {
-    public function index(Request $request) {
-        $data = $request->validate(['q'=>['nullable','string','max:100'], 'status'=>['nullable',Rule::in(['published','draft'])]]);
-        $query = Blog::select(['id','title','slug','is_published','created_at']);
-        if (!empty($data['q'])) $query->where('title','like','%'.$data['q'].'%');
-        if (!empty($data['status'])) $query->where('is_published',$data['status']==='published');
-        return view('admin.blogs.index', ['blogs'=>$query->latest()->paginate(20)->withQueryString()]);
+    public function index(Request $request)
+    {
+        $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'status' => ['nullable', Rule::in(['published', 'draft'])]]);
+        $query = Blog::select(['id', 'title', 'slug', 'is_published', 'created_at']);
+        if (! empty($data['q'])) {
+            $query->whereLike('title', '%'.$data['q'].'%');
+        }
+        if (! empty($data['status'])) {
+            $query->where('is_published', $data['status'] === 'published');
+        }
+
+        return view('admin.blogs.index', ['blogs' => $query->latest()->paginate(20)->withQueryString()]);
     }
-    public function create() { return view('admin.blogs.form', ['blog' => new Blog]); }
-    public function edit(Blog $blog) { return view('admin.blogs.form', compact('blog')); }
+
+    public function create()
+    {
+        return view('admin.blogs.form', ['blog' => new Blog]);
+    }
+
+    public function edit(Blog $blog)
+    {
+        return view('admin.blogs.form', compact('blog'));
+    }
 
     private function data(Request $request, ?Blog $blog = null): array
     {
-        if (!$request->filled('slug')) $request->merge(['slug' => Str::slug($request->input('title', ''))]);
+        if (! $request->filled('slug')) {
+            $request->merge(['slug' => Str::slug($request->input('title', ''))]);
+        }
         $data = $request->validate([
             'title' => ['required', 'string', 'max:180'],
             'slug' => ['required', 'string', 'max:180', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('blogs', 'slug')->ignore($blog)],
@@ -37,7 +54,7 @@ class BlogController extends Controller
         ]);
         $data['content'] = CleanHtml::make($data['content']);
         if (trim(strip_tags($data['content'])) === '') {
-            throw \Illuminate\Validation\ValidationException::withMessages(['content' => 'Enter some readable blog content.']);
+            throw ValidationException::withMessages(['content' => 'Enter some readable blog content.']);
         }
         unset($data['featured_image']);
         if ($request->hasFile('featured_image')) {
@@ -45,24 +62,28 @@ class BlogController extends Controller
             $data['featured_image_mime'] = $request->file('featured_image')->getMimeType();
         }
         $data['is_published'] = $request->boolean('is_published');
+
         return $data;
     }
 
     public function store(Request $request)
     {
         Blog::create($this->data($request));
+
         return redirect()->route('admin.blogs.index')->with('success', 'Blog created.');
     }
 
     public function update(Request $request, Blog $blog)
     {
         $blog->update($this->data($request, $blog));
+
         return redirect()->route('admin.blogs.index')->with('success', 'Blog updated.');
     }
 
     public function destroy(Blog $blog)
     {
         $blog->delete();
+
         return back()->with('success', 'Blog deleted.');
     }
 }

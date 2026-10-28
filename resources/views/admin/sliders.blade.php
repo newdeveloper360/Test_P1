@@ -7,7 +7,8 @@
         <div class="form-actions"><button class="btn primary" type="submit">Add sliders</button></div>
     </form>
 </div>
-<div class="section-heading"><h2>{{ $sliders->count() }} slider{{ $sliders->count()===1?'':'s' }}</h2></div>
+<form method="get" class="card filters mb-4"><div class="field grow"><label for="q">Slider title</label><input class="form-control" id="q" name="q" maxlength="100" value="{{ request('q') }}"></div><div class="field"><label for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All statuses</option>@foreach(['active'=>'Active','inactive'=>'Inactive'] as $value=>$label)<option value="{{ $value }}" @selected(request('status')===$value)>{{ $label }}</option>@endforeach</select></div><button class="btn primary">Filter</button><a class="btn" href="{{ route('admin.sliders') }}">Reset</a></form>
+<div class="section-heading"><h2>{{ $sliders->total() }} slider{{ $sliders->total()===1?'':'s' }}</h2></div>
 <div class="slider-grid">
 @forelse($sliders as $slider)
 <div class="card"><img src="{{ route('admin.sliders.image',$slider) }}" alt="{{ $slider->title ?: 'Slider image' }}"><form method="post" action="{{ route('admin.sliders.update',$slider) }}" enctype="multipart/form-data">@csrf @method('PATCH')
@@ -19,5 +20,6 @@
 </form><form method="post" action="{{ route('admin.sliders.destroy',$slider) }}" data-confirm="Delete this slider?" style="margin-top:10px">@csrf @method('DELETE')<button class="btn danger" type="submit">Delete slider</button></form></div>
 @empty<div class="card empty">No sliders yet. Upload an image above to get started.</div>@endforelse
 </div>
+<div class="pagination">{{ $sliders->links() }}</div>
 @endsection
 

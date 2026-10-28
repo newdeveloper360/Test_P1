@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\LocationHistoryFilters;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -15,16 +16,20 @@ class MemberController extends Controller
         if ($request->user()->role !== 'user') {
             return Response::failed('User access required.', null, 403);
         }
+        $data = $request->validate(['name' => ['nullable', 'string', 'max:100'], 'phone' => ['nullable', 'string', 'max:13', 'regex:/^[0-9]+$/']]);
         $members = $request->user()->members()
-            ->with(['locations' => fn ($query) => $query->orderByDesc('captured_at')->limit(1)])
-            ->orderByDesc('created_at')->paginate(100)
+            ->when($request->filled('name'), fn ($query) => $query->whereLike('name', '%'.$data['name'].'%'))
+            ->when($request->filled('phone'), fn ($query) => $query->whereLike('phone', '%'.$data['phone'].'%'))
+            ->with('latestFix')
+            ->orderByDesc('created_at')->orderByDesc('id')->paginate(100)->withQueryString()
             ->through(fn (User $member) => [
                 'id' => $member->id,
                 'name' => $member->name,
                 'phone' => $member->phone,
                 'is_blocked' => $member->is_blocked,
+                'is_active' => $member->is_active,
                 'joined_at' => $member->created_at,
-                'latest_location' => $member->locations->first(),
+                'latest_location' => $member->latestFix,
             ]);
 
         return Response::success('Members loaded.', $members);
@@ -38,7 +43,9 @@ class MemberController extends Controller
             return Response::failed('Member not found.', null, 404);
         }
 
-        return Response::success('Member location history loaded.', $member->locations()
-            ->orderByDesc('captured_at')->orderByDesc('id')->paginate(50));
+        $query = LocationHistoryFilters::apply($member->locations(), $request);
+
+        return Response::success('Member location history loaded.', $query
+            ->orderByDesc('captured_at')->orderByDesc('id')->paginate(50)->withQueryString());
     }
 }

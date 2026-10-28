@@ -12,7 +12,7 @@
         </div>
         <div class="product-scene">
             <span class="scene-circle circle-outer"></span><span class="scene-circle circle-inner"></span><span class="scene-dots"></span>
-            <img class="hero-phone" src="{{ asset('site/phone-preview.svg') }}" alt="Phone mockup showing the app's location details, map preview, stay time and navigation" width="370" height="740" fetchpriority="high">
+            <img class="hero-phone" src="{{ asset('assets/frontend/images/phone-preview.svg') }}" alt="Phone mockup showing the app's location details, map preview, stay time and navigation" width="370" height="740" fetchpriority="high">
             <div class="product-float float-place"><span class="float-icon">@include('site.icon',['name'=>'pin'])</span><div><strong>Your current place</strong><small>More than coordinates</small></div></div>
             <div class="product-float float-time"><span class="float-icon">@include('site.icon',['name'=>'clock'])</span><div><strong>Time, in context</strong><small>Understand each stay</small></div></div>
             <div class="product-float float-sync"><span class="float-icon">@include('site.icon',['name'=>'sync'])</span><div><strong>Offline? Keep going.</strong><small>Sync when connected</small></div></div>

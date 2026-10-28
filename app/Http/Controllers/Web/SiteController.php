@@ -35,13 +35,14 @@ class SiteController extends Controller
             'seoDescription' => $setting->seo_description ?: 'Your phone location, place history and connected members in one Android app.',
             'seoKeywords' => $setting->seo_keywords,
             'canonical' => $base.(request()->path() === '/' ? '/' : '/'.request()->path()),
-            'ogImage' => $setting->logo_url ? url($setting->logo_url) : asset('site/social-card.png'),
+            'ogImage' => $setting->logo_url ? url($setting->logo_url) : asset('assets/frontend/images/social-card.png'),
             'faq' => self::FAQ,
         ];
         if ($setting->maintenance_mode) {
             return response()->view('site.maintenance', array_merge($defaults, ['noindex' => true]), 503)
                 ->header('Retry-After', '3600');
         }
+
         return view($view, array_merge($defaults, $data));
     }
 
@@ -51,10 +52,25 @@ class SiteController extends Controller
             ->select(['id', 'title', 'slug', 'short_description', 'created_at'])->latest()->limit(3)->get()]);
     }
 
-    public function about() { return $this->site('site.about', ['pageTitle' => 'About', 'seoDescription' => 'Learn how IP Tracker brings Android phone locations, place history and connected members into one clear view.']); }
-    public function features() { return $this->site('site.features', ['pageTitle' => 'Features', 'seoDescription' => 'Explore IP Tracker features: current location details, address history, stay duration, member invite codes, offline sync and Google Maps.']); }
-    public function faq() { return $this->site('site.faq', ['pageTitle' => 'Frequently asked questions', 'seoDescription' => 'Find answers about IP Tracker location accuracy, Android permissions, background tracking, offline sync, member sharing and stay time.']); }
-    public function contact() { return $this->site('site.contact', ['pageTitle' => 'Contact us', 'seoDescription' => 'Contact the IP Tracker support team for help with your account, Android app or connected members.']); }
+    public function about()
+    {
+        return $this->site('site.about', ['pageTitle' => 'About', 'seoDescription' => 'Learn how IP Tracker brings Android phone locations, place history and connected members into one clear view.']);
+    }
+
+    public function features()
+    {
+        return $this->site('site.features', ['pageTitle' => 'Features', 'seoDescription' => 'Explore IP Tracker features: current location details, address history, stay duration, member invite codes, offline sync and Google Maps.']);
+    }
+
+    public function faq()
+    {
+        return $this->site('site.faq', ['pageTitle' => 'Frequently asked questions', 'seoDescription' => 'Find answers about IP Tracker location accuracy, Android permissions, background tracking, offline sync, member sharing and stay time.']);
+    }
+
+    public function contact()
+    {
+        return $this->site('site.contact', ['pageTitle' => 'Contact us', 'seoDescription' => 'Contact the IP Tracker support team for help with your account, Android app or connected members.']);
+    }
 
     public function sendContact(Request $request)
     {
@@ -70,6 +86,7 @@ class SiteController extends Controller
         ]);
         unset($data['consent'], $data['website']);
         ContactMessage::create($data);
+
         return redirect()->route('site.contact')->with('success', 'Thank you. Your message has been sent for review.');
     }
 
@@ -82,6 +99,7 @@ class SiteController extends Controller
     public function blog(Blog $blog)
     {
         abort_unless($blog->is_published, 404);
+
         return $this->site('site.blog', ['blog' => $blog, 'pageTitle' => $blog->title,
             'seoTitle' => $blog->meta_title ?: $blog->title,
             'seoDescription' => $blog->meta_description ?: $blog->short_description,
@@ -100,23 +118,27 @@ class SiteController extends Controller
         if ($blog->featured_image_data) {
             $data = base64_decode($blog->featured_image_data, true);
             abort_unless($data !== false && in_array($blog->featured_image_mime, ['image/jpeg', 'image/png', 'image/webp'], true), 404);
+
             return response($data)->header('Content-Type', $blog->featured_image_mime)
                 ->header('X-Content-Type-Options', 'nosniff')->header('Cache-Control', 'public, max-age=3600')
                 ->setEtag(hash('sha256', $data));
         }
         abort_unless($blog->featured_image && Storage::disk('public')->exists($blog->featured_image), 404);
+
         return Storage::disk('public')->response($blog->featured_image);
     }
 
     public function download()
     {
         $target = Setting::current()->android_update_url;
-        if ($target && !in_array(rtrim($target, '/'), [rtrim(route('site.download'), '/'), rtrim(url('/download'), '/')], true)) {
+        if ($target && ! in_array(rtrim($target, '/'), [rtrim(route('site.download'), '/'), rtrim(url('/download'), '/')], true)) {
             abort_unless(filter_var($target, FILTER_VALIDATE_URL) && in_array(parse_url($target, PHP_URL_SCHEME), ['http', 'https'], true), 404);
+
             return redirect()->away($target);
         }
         $path = public_path('downloads/ip-tracker.apk');
         abort_unless(is_file($path), 404, 'The Android download is not available yet.');
+
         return response()->download($path, 'IP-Tracker.apk', ['Content-Type' => 'application/vnd.android.package-archive',
             'X-Content-Type-Options' => 'nosniff']);
     }
@@ -133,12 +155,14 @@ class SiteController extends Controller
         foreach (Page::all(['slug', 'updated_at']) as $page) {
             $urls->push(['loc' => $base.'/pages/'.$page->slug, 'updated' => $page->updated_at->toAtomString()]);
         }
+
         return response()->view('site.sitemap', compact('urls'))->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 
     public function robots()
     {
         $base = rtrim(Setting::current()->site_url ?: url('/'), '/');
+
         return response("User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\nSitemap: {$base}/sitemap.xml\n")
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }

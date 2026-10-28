@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Slider;
+use App\Support\StoredImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Storage;
 
 class SliderController extends Controller
 {
@@ -18,8 +18,8 @@ class SliderController extends Controller
 
     public function image(Slider $slider)
     {
-        if (!$slider->is_active || !Storage::disk('public')->exists($slider->image_path)) abort(404);
-        return Storage::disk('public')->response($slider->image_path, null,
-            ['Cache-Control' => 'public, max-age=86400']);
+        abort_unless($slider->is_active, 404);
+
+        return StoredImage::response($slider->image_data, $slider->image_mime, $slider->image_path);
     }
 }

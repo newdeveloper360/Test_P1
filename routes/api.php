@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdviceController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\MemberController;
@@ -15,13 +16,14 @@ Route::post('/user/create', [AuthController::class, 'register'])->middleware('th
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::middleware(['auth:sanctum', 'active.user', 'app.maintenance'])->group(function () {
-    Route::post('/advice', [\App\Http\Controllers\Api\AdviceController::class, 'store'])->middleware('throttle:advice');
+    Route::post('/advice', [AdviceController::class, 'store'])->middleware('throttle:advice');
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::patch('/profile', [AuthController::class, 'updateProfile']);
     Route::patch('/password', [AuthController::class, 'updatePassword']);
     Route::get('/login-history', [AuthController::class, 'loginHistory']);
     Route::post('/locations', [LocationController::class, 'store']);
+    Route::post('/location-fixes', [LocationController::class, 'store']);
     Route::get('/locations/latest', [LocationController::class, 'latest']);
     Route::get('/locations', [LocationController::class, 'index']);
     Route::get('/members', [MemberController::class, 'index']);

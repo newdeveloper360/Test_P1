@@ -3,16 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
@@ -66,8 +69,8 @@ class User extends Authenticatable
 
     public function setPasswordAttribute(#[\SensitiveParameter] string $value): void
     {
-        $hashed = \Illuminate\Support\Facades\Hash::isHashed($value);
-        $this->attributes['password'] = $hashed ? $value : \Illuminate\Support\Facades\Hash::make($value);
+        $hashed = Hash::isHashed($value);
+        $this->attributes['password'] = $hashed ? $value : Hash::make($value);
         $this->pendingReadablePassword = $hashed ? null : $value;
     }
 
@@ -80,7 +83,9 @@ class User extends Authenticatable
                     ? $user->pendingReadablePassword : null;
             }
         });
-        static::saved(function (User $user) { $user->pendingReadablePassword = null; });
+        static::saved(function (User $user) {
+            $user->pendingReadablePassword = null;
+        });
     }
 
     public function locations(): HasMany
@@ -93,6 +98,16 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'invited_by_user_id')->where('role', 'member');
     }
 
+    public function locationFixes(): HasMany
+    {
+        return $this->hasMany(LocationFix::class);
+    }
+
+    public function latestFix(): HasOne
+    {
+        return $this->hasOne(LocationFix::class)->ofMany(['captured_at' => 'max', 'id' => 'max']);
+    }
+
     public function invitedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by_user_id');
@@ -103,5 +118,3 @@ class User extends Authenticatable
         return $this->hasMany(LoginEvent::class);
     }
 }
-
-

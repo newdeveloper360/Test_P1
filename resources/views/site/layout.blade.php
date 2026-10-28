@@ -19,14 +19,15 @@
     <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{{ $title }}">
     <meta name="twitter:description" content="{{ $seoDescription }}"><meta name="twitter:image" content="{{ $ogImage }}">
     @if(isset($blog))<meta property="article:published_time" content="{{ $blog->created_at->toAtomString() }}"><meta property="article:modified_time" content="{{ $blog->updated_at->toAtomString() }}">@endif
-    <link rel="icon" href="{{ asset('site/app-icon.webp') }}" type="image/webp">
-    <link rel="stylesheet" href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('site/website.css') }}?v=2">
-    <link rel="stylesheet" href="{{ asset('site/bootstrap-theme.css') }}">
-    <link rel="stylesheet" href="{{ asset('site/reference.css') }}?v=1">
+    <link rel="icon" href="{{ asset('assets/frontend/images/app-icon.webp') }}" type="image/webp">
+    <link rel="stylesheet" href="{{ asset('assets/frontend/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/frontend/css/website.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('assets/frontend/css/bootstrap-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/frontend/css/reference.css') }}?v=1">
     <script type="application/ld+json">{!! json_encode(['@context'=>'https://schema.org','@type'=>'WebSite','name'=>$siteName,'url'=>rtrim($setting->site_url ?: url('/'),'/').'/'], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     @if(isset($blog))<script type="application/ld+json">{!! json_encode(['@context'=>'https://schema.org','@type'=>'BlogPosting','headline'=>$blog->title,'description'=>$seoDescription,'image'=>$ogImage,'datePublished'=>$blog->created_at->toAtomString(),'dateModified'=>$blog->updated_at->toAtomString(),'author'=>['@type'=>'Organization','name'=>$siteName],'mainEntityOfPage'=>$canonical], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>@endif
     @if(request()->routeIs('site.faq'))<script type="application/ld+json">{!! json_encode(['@context'=>'https://schema.org','@type'=>'FAQPage','mainEntity'=>collect($faq)->map(fn($item)=>['@type'=>'Question','name'=>$item[0],'acceptedAnswer'=>['@type'=>'Answer','text'=>$item[1]]])->all()], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>@endif
+<link rel="stylesheet" href="{{ asset('assets/frontend/css/roboto.css') }}">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -42,7 +43,7 @@
 <div><h2>Quick links</h2>@foreach(['home'=>'Home','about'=>'About us','features'=>'Features','blogs'=>'Blog','contact'=>'Contact us'] as $route=>$label)<a href="{{ route('site.'.$route) }}">{{ $label }}</a>@endforeach</div>
 <div><h2>Inside the app</h2>@foreach(['Current location','Location history','Stay duration','Connected members','Offline sync'] as $label)<a href="{{ route('site.features') }}">{{ $label }}</a>@endforeach</div>
 <div><h2>Help & support</h2><a href="{{ route('site.faq') }}">FAQs</a>@foreach($footerPages as $footerPage)<a href="{{ route('site.page',$footerPage->slug) }}">{{ $footerPage->title }}</a>@endforeach @if($setting->support_email)<a class="break" href="mailto:{{ $setting->support_email }}">{{ $setting->support_email }}</a>@endif @if($setting->phone)<a href="tel:{{ preg_replace('/[^+0-9]/','',$setting->phone) }}">{{ $setting->phone }}</a>@endif @if($setting->whatsapp)<a href="https://wa.me/{{ preg_replace('/\D/','',$setting->whatsapp) }}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>@endif @if(!$setting->support_email && !$setting->phone && !$setting->whatsapp)<a href="{{ route('site.contact') }}">Contact support</a>@endif</div>
-<div class="footer-showcase"><h2>Your day, in view</h2><a class="footer-preview" href="{{ route('site.features') }}" aria-label="Explore the Android app"><span>Your places.<br>Your time.<br>Your connections.</span><img src="{{ asset('site/phone-preview.svg') }}" alt="" width="370" height="740" loading="lazy"></a><a class="footer-download" href="{{ route('site.download') }}">@include('site.icon',['name'=>'download']) Download Android app</a></div>
+<div class="footer-showcase"><h2>Your day, in view</h2><a class="footer-preview" href="{{ route('site.features') }}" aria-label="Explore the Android app"><span>Your places.<br>Your time.<br>Your connections.</span><img src="{{ asset('assets/frontend/images/phone-preview.svg') }}" alt="" width="370" height="740" loading="lazy"></a><a class="footer-download" href="{{ route('site.download') }}">@include('site.icon',['name'=>'download']) Download Android app</a></div>
 </div><div class="wrap footer-bottom"><span>© {{ date('Y') }} {{ $siteName }}. All rights reserved.</span><div class="footer-legal"><a href="{{ route('site.sitemap') }}">Sitemap</a><a href="{{ route('site.contact') }}">Contact us</a><span>Made for Android.</span></div></div></footer>
-<script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}" defer></script><script src="{{ asset('site/reference.js') }}?v=1" defer></script>
+<script src="{{ asset('assets/frontend/js/bootstrap.bundle.min.js') }}" defer></script><script src="{{ asset('assets/frontend/js/reference.js') }}?v=1" defer></script>
 </body></html>

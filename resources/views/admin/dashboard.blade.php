@@ -2,7 +2,16 @@
 @section('title','Dashboard')
 @section('actions')<a class="btn primary" href="{{ route('admin.accounts.create') }}">+ Add user</a>@endsection
 @section('content')
-<div class="overview-intro"><div><h2>Your workspace, at a glance.</h2><p>Manage your accounts, location records and app content from one place.</p></div><span class="badge calendar">{{ now()->format('d M Y') }}</span></div>
+<section class="dashboard-hero" aria-labelledby="dashboardHeroTitle">
+    <div class="dashboard-hero-copy">
+        <span class="hero-eyebrow">ADMIN WORKSPACE</span>
+        <h2 id="dashboardHeroTitle">Your tracking workspace, <strong>at a glance.</strong></h2>
+        <p>Manage accounts, review location activity and keep your app content up to date.</p>
+        <div class="hero-points"><span class="hero-point"><b>{{ number_format($active) }}</b> active accounts</span><span class="hero-point"><b>{{ number_format($totalMembers) }}</b> members</span><span class="hero-point"><b>{{ number_format($pendingContacts + $newAdvice) }}</b> requests to review</span></div>
+        <div class="hero-actions"><a class="btn primary" href="{{ route('admin.accounts.index') }}">View all accounts →</a><a class="btn" href="{{ route('admin.advice.index') }}">Review app advice</a></div>
+    </div>
+    <span class="hero-date">{{ now()->format('d M Y') }}</span>
+</section>
 <div class="overview-grid">@foreach([['users','Users',$totalUsers,'Accounts with invite codes','admin.accounts.index',['role'=>'user'],'blue'],['users','Members',$totalMembers,'Connected to user accounts','admin.accounts.index',['role'=>'member'],'purple'],['check','Active accounts',$active,'Users and members with access','admin.accounts.index',['status'=>'active'],'green'],['warning','Blocked accounts',$blocked,'App access restricted','admin.accounts.index',['status'=>'blocked'],'orange']] as [$icon,$label,$value,$hint,$route,$query,$tone])<a class="card overview-stat {{ $tone }}" href="{{ route($route,$query) }}"><div class="d-flex justify-content-between align-items-center"><span class="stat-icon">@include('admin.icon',['name'=>$icon])</span><span class="stat-link">↗</span></div><span class="label">{{ $label }}</span><strong class="stat-value">{{ number_format($value) }}</strong><span class="hint">{{ $hint }}</span></a>@endforeach</div>
 <div class="section-heading"><div><h2>Overview details</h2><p class="muted">Content and requests that need your attention.</p></div></div>
 <div class="module-grid">@foreach([['pin','Location records',$locations,'admin.accounts.index',[]],['users','Inactive accounts',$inactive,'admin.accounts.index',['status'=>'inactive']],['sliders','App sliders',$sliderCount,'admin.sliders',[]],['blogs','Published blogs',$blogCount,'admin.blogs.index',['status'=>'published']],['contacts','Pending messages',$pendingContacts,'admin.contacts.index',['status'=>'pending']],['advice','New app advice',$newAdvice,'admin.advice.index',['status'=>'new']]] as [$icon,$label,$value,$route,$query])<a class="card module-card" href="{{ route($route,$query) }}"><span class="module-icon">@include('admin.icon',['name'=>$icon])</span><div><span class="muted">{{ $label }}</span><strong>{{ number_format($value) }}</strong></div><span class="muted ms-auto">↗</span></a>@endforeach</div>
